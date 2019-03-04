@@ -20,7 +20,7 @@ const Versor = [
     [diagMagn, 1, diagMagn]
 ]
 
-class Vector3 {
+class Vector2 {
     constructor(x, y) {
         this.x = x;
         this.y = y;
@@ -67,28 +67,28 @@ function KeyDownManager(event) {
 
 function KeyUpManager(event) {
     event.preventDefault();
-    if(event.keyCode === 37) {
+    if(event.keyCode === ARROW_LEFT) {
         Keys.ArrowLeft = false;
         if(!Keys.ArrowRight)
             Axis.Horizontal = 0;
         else
             Axis.Horizontal = 1;
     }
-    if(event.keyCode === 38) {
+    if(event.keyCode === ARROW_UP) {
         Keys.ArrowUp = false;
         if(!Keys.ArrowDown)        
             Axis.Vertical = 0;
         else
             Axis.Vertical = 1;
     }
-    if(event.keyCode === 39) {
+    if(event.keyCode === ARROW_RIGHT) {
         Keys.ArrowRight = false;
         if(!Keys.ArrowLeft)        
             Axis.Horizontal = 0;
         else
             Axis.Horizontal = -1;
     }
-    if(event.keyCode === 40) {
+    if(event.keyCode === ARROW_DOWN) {
         Keys.ArrowDown = false;
         if(!Keys.ArrowUp)        
             Axis.Vertical = 0;
@@ -104,31 +104,49 @@ document.addEventListener('keydown', KeyDownManager, false);
 document.addEventListener('keyup', KeyUpManager, false);
 
 var player;
+var x = 0;
 var img;
+var background;
 const speed = 5;
+var idle = new Image();
+
 function Start() {
-    background = new GameObject('Background', new Vector3(0, 0), new Renderer("Grass1.png"));
-    player = new GameObject('Player', new Vector3(10, 10), new Renderer("Bucket-Idle.png"));
+    background = new GameObject('Background', new Vector2(0, 0), new Renderer("Grass2.png"));
+    player = new GameObject('Player', new Vector2(150, 150), new Renderer("Frog_Run_COLORv1.png"));
+    goat = new GameObject('Goat', new Vector2(100, 100), new Renderer("Bucket-Idle.png"));
     img = context.createImageData(canvas.width, canvas.height);
-    for (var i = 0; i < img.data.lenght; i++)
+    idle.src = "Frog_Idle_COLORv1.png";
+    for (var i = 0; i < img.data.lenght; i++) {
         img.data[i] = 0;
+    }
     GameObjectList.push(background);
+    GameObjectList.push(goat);
     GameObjectList.push(player);
 }
 
 function Update(deltaTime) {
-    player.Transform.x += Math.trunc(Axis.Horizontal * Versor[Axis.Horizontal + 1][Axis.Vertical + 1] * speed);   
-    player.Transform.y += Math.trunc(Axis.Vertical * Versor[Axis.Horizontal + 1][Axis.Vertical + 1] * speed);    
-    console.log(Versor[Axis.Horizontal + 1][Axis.Vertical + 1], Versor[Axis.Horizontal + 1][Axis.Vertical + 1]);
+    var worldMovement = new Vector2(Math.trunc(Axis.Horizontal * Versor[Axis.Horizontal + 1][Axis.Vertical + 1] * speed), Math.trunc(Axis.Vertical * Versor[Axis.Horizontal + 1][Axis.Vertical + 1] * speed)); 
+
+    for(var i = 0; i < GameObjectList.length-1; i++) {
+        GameObjectList[i].Transform.x -= worldMovement.x;
+        GameObjectList[i].Transform.y -= worldMovement.y;
+    }
+    // console.log(Versor[Axis.Horizontal + 1][Axis.Vertical + 1], Versor[Axis.Horizontal + 1][Axis.Vertical + 1]);
 }
     
 function Render() {
     context.putImageData(img, 0, 0);
-    for(var i = 0; i < GameObjectList.length; i++) {
+    for(var i = 0; i < GameObjectList.length-1; i++) {
         var currObj = GameObjectList[i];
-        context.drawImage(currObj.Renderer.image, 
-            currObj.Transform.x, 
-            currObj.Transform.y);
+        context.drawImage(currObj.Renderer.image, currObj.Transform.x, currObj.Transform.y);
+    }
+    // context.drawImage(GameObjectList[1].Renderer.image, 120, 110);
+    if(Axis.Horizontal || Axis.Vertical) {
+        context.drawImage(player.Renderer.image, x * 64, 0, 64, 64, player.Transform.x, player.Transform.y, 64, 64);
+        x = (x+1) % 8;
+    }
+    else {
+        context.drawImage(idle, player.Transform.x, player.Transform.y);
     }
 }
 
