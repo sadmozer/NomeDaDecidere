@@ -109,44 +109,63 @@ var img;
 var background;
 const speed = 5;
 var idle = new Image();
-
+var worldMovement;
+var orientation = true;
+var playerFlippedImg = new Image();
 function Start() {
     background = new GameObject('Background', new Vector2(0, 0), new Renderer("Grass2.png"));
     player = new GameObject('Player', new Vector2(150, 150), new Renderer("Frog_Run_COLORv1.png"));
     goat = new GameObject('Goat', new Vector2(100, 100), new Renderer("Bucket-Idle.png"));
     img = context.createImageData(canvas.width, canvas.height);
     idle.src = "Frog_Idle_COLORv1.png";
+    playerFlippedImg.src = "Frog_Run_COLORv1 - Flipped.png";
     for (var i = 0; i < img.data.lenght; i++) {
         img.data[i] = 0;
     }
     GameObjectList.push(background);
     GameObjectList.push(goat);
-    GameObjectList.push(player);
 }
 
 function Update(deltaTime) {
-    var worldMovement = new Vector2(Math.trunc(Axis.Horizontal * Versor[Axis.Horizontal + 1][Axis.Vertical + 1] * speed), Math.trunc(Axis.Vertical * Versor[Axis.Horizontal + 1][Axis.Vertical + 1] * speed)); 
+    worldMovement = new Vector2(Math.trunc(Axis.Horizontal * Versor[Axis.Horizontal + 1][Axis.Vertical + 1] * speed), Math.trunc(Axis.Vertical * Versor[Axis.Horizontal + 1][Axis.Vertical + 1] * speed)); 
 
-    for(var i = 0; i < GameObjectList.length-1; i++) {
-        GameObjectList[i].Transform.x -= worldMovement.x;
-        GameObjectList[i].Transform.y -= worldMovement.y;
-    }
+    player.Transform.x += worldMovement.x;
+    player.Transform.y += worldMovement.y;
+
     // console.log(Versor[Axis.Horizontal + 1][Axis.Vertical + 1], Versor[Axis.Horizontal + 1][Axis.Vertical + 1]);
 }
-    
+
 function Render() {
+    context.translate(-worldMovement.x, -worldMovement.y);
     context.putImageData(img, 0, 0);
-    for(var i = 0; i < GameObjectList.length-1; i++) {
+    for(var i = 0; i < GameObjectList.length; i++) {
         var currObj = GameObjectList[i];
         context.drawImage(currObj.Renderer.image, currObj.Transform.x, currObj.Transform.y);
     }
-    // context.drawImage(GameObjectList[1].Renderer.image, 120, 110);
+
     if(Axis.Horizontal || Axis.Vertical) {
-        context.drawImage(player.Renderer.image, x * 64, 0, 64, 64, player.Transform.x, player.Transform.y, 64, 64);
-        x = (x+1) % 8;
+        if((orientation && Axis.Horizontal == -1) || (!orientation && Axis.Horizontal == 1)) {
+            nextImageIndex = Math.trunc((x+1)/4) % 8
+            context.drawImage(playerFlippedImg, nextImageIndex * 64, 0, 64, 64, player.Transform.x, player.Transform.y, 64, 64);
+            x++;
+        }
+        else {
+            nextImageIndex = Math.trunc((x+1)/4) % 8
+            context.drawImage(player.Renderer.image, nextImageIndex * 64, 0, 64, 64, player.Transform.x, player.Transform.y, 64, 64);
+            x++;
+        }
     }
     else {
-        context.drawImage(idle, player.Transform.x, player.Transform.y);
+        if((orientation && Axis.Horizontal == -1) || (!orientation && Axis.Horizontal == 1)) {
+            context.save();
+            context.translate(player.Transform.x, player.Transform.y);
+            context.scale(-1, 1);
+            context.drawImage(idle, -64, 0);
+            context.restore();
+        }
+        else {
+            context.drawImage(idle, player.Transform.x, player.Transform.y);
+        }
     }
 }
 
