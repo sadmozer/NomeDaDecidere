@@ -20,27 +20,70 @@ const Versor = [
     [diagMagn, 1, diagMagn]
 ]
 
-class Vector2 {
-    constructor(x, y) {
-        this.x = x;
-        this.y = y;
+function Vector2 (x, y) {
+    this.x = x;
+    this.y = y;
+}
+
+function Renderer(src, mirrorsrc) {
+    this.orientation = true;
+    this.image = new Image();
+    if(mirrorsrc) {
+        this.mirrorImage = new Image();
+        this.mirrorImage.src = mirrorsrc;
+    }
+    else {
+        this.mirrorImage = null;
+    }
+    this.image.src = src;
+} 
+
+function Animator(src, mirrorsrc, frames, width, height) {
+    this.orientation = true;
+    this.image = new Image();
+    this.mirrorImage = new Image();
+    this.mirrorImage.src = mirrorsrc;
+    this.image.src = src;
+    this.frames = frames;
+    this.width = width;
+    this.height = height;
+    this.x = 0;
+    this.y = 0;
+}
+
+Animator.prototype = {
+    nextImageIndex: function () {
+        if(this.orientation) {
+            return (Math.trunc(x++/4)) % 8;
+        }
+        else {
+            if(Math.trunc(y/4) >= 8) {
+                y -= 8*4;
+            }
+            return (8-Math.trunc(y++/4)) % 8
+        }
     }
 }
 
-class Renderer {
-    constructor(src) {
-        this.image = new Image();
-        this.image.src = src;
+function GameObject(Name, Transform, Renderer, Animator) {
+    this.Name = Name;
+    this.Transform = Transform || null;
+    this.Renderer = Renderer || null;
+    this.Animator = Animator || null;
+}
+
+GameObject.prototype = {
+    addComponent: function(CmpName, Cmp) {
+        switch(CmpName) {
+            case "Transform": this.Transform = Cmp;
+                break;
+            case "Renderer": this.Renderer = Cmp;
+                break;
+            case "Animator": this.Animator = Cmp;
+        }
     }
 }
 
-class GameObject {
-    constructor(Name, Transform, Renderer) {
-        this.Name = Name;
-        this.Transform = Transform;
-        this.Renderer = Renderer;
-    }
-}
 
 function KeyDownManager(event) {
     event.preventDefault();
@@ -105,66 +148,65 @@ document.addEventListener('keyup', KeyUpManager, false);
 
 var player;
 var x = 0;
-var img;
+var y = 0;
 var background;
-const speed = 5;
-var idle = new Image();
+const speed = 4.5;
 var worldMovement;
-var orientation = true;
-var playerFlippedImg = new Image();
+
 function Start() {
-    background = new GameObject('Background', new Vector2(0, 0), new Renderer("Grass2.png"));
-    player = new GameObject('Player', new Vector2(150, 150), new Renderer("Frog_Run_COLORv1.png"));
-    goat = new GameObject('Goat', new Vector2(100, 100), new Renderer("Bucket-Idle.png"));
-    img = context.createImageData(canvas.width, canvas.height);
-    idle.src = "Frog_Idle_COLORv1.png";
-    playerFlippedImg.src = "Frog_Run_COLORv1 - Flipped.png";
-    for (var i = 0; i < img.data.lenght; i++) {
-        img.data[i] = 0;
+    background = new GameObject('Background', new Vector2(0, 0), new Renderer("Grass2.png", null));
+    
+    player = new GameObject("Player", new Vector2(150, 150));
+    player.addComponent("Renderer", new Renderer("Frog_Idle_COLORv1.png", "Frog_Idle_COLORv1 - Flipped.png"));
+    player.addComponent("Animator", new Animator("Frog_Run_COLORv1.png", "Frog_Run_COLORv1 - Flipped.png", 8, 64, 64));
+
+    goat = new GameObject("Goat", new Vector2(100, 100), new Renderer("Bucket-Idle.png"));
+    
+    emptyCanvas = context.createImageData(canvas.width, canvas.height);
+    for (var i = 0; i < emptyCanvas.data.lenght; i++) {
+        emptyCanvas.data[i] = 0;
     }
+
     GameObjectList.push(background);
     GameObjectList.push(goat);
 }
 
 function Update(deltaTime) {
-    worldMovement = new Vector2(Math.trunc(Axis.Horizontal * Versor[Axis.Horizontal + 1][Axis.Vertical + 1] * speed), Math.trunc(Axis.Vertical * Versor[Axis.Horizontal + 1][Axis.Vertical + 1] * speed)); 
+    worldMovement = new Vector2(Math.trunc(Axis.Horizontal * Versor[Axis.Horizontal + 1][Axis.Vertical + 1] * speed ), Math.trunc(Axis.Vertical * Versor[Axis.Horizontal + 1][Axis.Vertical + 1] * speed)); 
 
     player.Transform.x += worldMovement.x;
     player.Transform.y += worldMovement.y;
-
-    // console.log(Versor[Axis.Horizontal + 1][Axis.Vertical + 1], Versor[Axis.Horizontal + 1][Axis.Vertical + 1]);
+    
+    if((player.Animator.orientation && Axis.Horizontal == -1)) {
+        player.Animator.orientation = false;
+        player.Renderer.orientation = false;
+    }
+    else if ((!player.Animator.orientation && Axis.Horizontal == 1)){
+        player.Animator.orientation = true;
+        player.Renderer.orientation = true;
+    }
 }
-
 function Render() {
     context.translate(-worldMovement.x, -worldMovement.y);
-    context.putImageData(img, 0, 0);
+    context.putImageData(emptyCanvas, 0, 0);
     for(var i = 0; i < GameObjectList.length; i++) {
         var currObj = GameObjectList[i];
         context.drawImage(currObj.Renderer.image, currObj.Transform.x, currObj.Transform.y);
     }
-
     if(Axis.Horizontal || Axis.Vertical) {
-        if((orientation && Axis.Horizontal == -1) || (!orientation && Axis.Horizontal == 1)) {
-            nextImageIndex = Math.trunc((x+1)/4) % 8
-            context.drawImage(playerFlippedImg, nextImageIndex * 64, 0, 64, 64, player.Transform.x, player.Transform.y, 64, 64);
-            x++;
+        if(player.Animator.orientation) {
+            context.drawImage(player.Animator.image, player.Animator.nextImageIndex() * 64, 0, 64, 64, player.Transform.x, player.Transform.y, 64, 64);
         }
         else {
-            nextImageIndex = Math.trunc((x+1)/4) % 8
-            context.drawImage(player.Renderer.image, nextImageIndex * 64, 0, 64, 64, player.Transform.x, player.Transform.y, 64, 64);
-            x++;
+            context.drawImage(player.Animator.mirrorImage, player.Animator.nextImageIndex() * 64, 0, 64, 64, player.Transform.x, player.Transform.y, 64, 64);
         }
     }
     else {
-        if((orientation && Axis.Horizontal == -1) || (!orientation && Axis.Horizontal == 1)) {
-            context.save();
-            context.translate(player.Transform.x, player.Transform.y);
-            context.scale(-1, 1);
-            context.drawImage(idle, -64, 0);
-            context.restore();
+        if(player.Renderer.orientation) {  
+            context.drawImage(player.Renderer.image, player.Transform.x, player.Transform.y);
         }
-        else {
-            context.drawImage(idle, player.Transform.x, player.Transform.y);
+        else if(!player.Renderer.orientation) {
+            context.drawImage(player.Renderer.mirrorImage, player.Transform.x, player.Transform.y);
         }
     }
 }
