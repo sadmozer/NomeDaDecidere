@@ -8,12 +8,20 @@ var GameObjectList = new Array();
 var Keys = {Space: false, ArrowUp: false, ArrowDown: false, ArrowRight: false, ArrowLeft: false};
 var Axis = {Horizontal: 0, Vertical: 0};
 
-const ARROW_LEFT = 37;
-const ARROW_UP = 38;
-const ARROW_RIGHT = 39;
-const ARROW_DOWN = 40;
+// const ARROW_LEFT = 37;
+// const ARROW_UP = 38;
+// const ARROW_RIGHT = 39;
+// const ARROW_DOWN = 40;
 
-const diagMagn = Math.cos(Math.PI / 4) * 0.875;
+const ARROW_UP = 87;
+const ARROW_LEFT = 65;
+const ARROW_RIGHT = 68;
+const ARROW_DOWN = 83; 
+
+const diagMagn = Math.cos(Math.PI / 4);
+// Beatty sequence number
+const speed = 7;
+const s = speed / (Math.sqrt(2)*Math.trunc(speed/Math.sqrt(2)))
 const Versor = [
     [diagMagn, 1, diagMagn],
     [1, 0, 1],
@@ -145,15 +153,47 @@ function KeyUpManager(event) {
     }
 }
 
+var rect = canvas.getBoundingClientRect();
+function MouseDownManager(event) {
+    beginLine.x = event.clientX-rect.left;
+    beginLine.y = event.clientY-rect.top;
+    draw = true;
+}
+function MouseUpManager(event) {
+    endLine.x = event.clientX-rect.left;
+    endLine.y = event.clientY-rect.top;
+    draw = false;
+}
+
+var mouseX;
+var mouseY;
+function MouseMoveManager(event) {
+    mouseX = event.clientX-rect.left;
+    mouseY = event.clientY-rect.top;
+}
+function doScroll(event) {
+    event.preventDefault();
+}
 document.addEventListener('keydown', KeyDownManager, false);
 document.addEventListener('keyup', KeyUpManager, false);
+document.addEventListener('mousedown', MouseDownManager, false);
+document.addEventListener('mouseup', MouseUpManager, false);
+document.addEventListener('mousemove', MouseMoveManager, false);
+document.addEventListener("wheel", doScroll, false);
 
+var beginLine;
+var endLine;
+var draw;
 var player;
 var background;
-const speed = 4.5;
+var target;
 var worldMovement;
 var collected;
 function Start() {
+    beginLine = new Vector2(0, 0);
+    endLine = new Vector2(0, 0);
+    draw = false;
+    target = new GameObject("Target", new Vector2(0, 0), new Renderer("Target1.png"));
     background = new GameObject('Background', new Vector2(0, 0), new Renderer("Grass2.png"));
     bucket = new GameObject("Bucket", new Vector2(100, 100), new Renderer("Bucket-Idle.png"));
     player = new GameObject("Player", new Vector2(150, 150));
@@ -170,13 +210,16 @@ function Start() {
 
     GameObjectList.push(background);
     GameObjectList.push(bucket);
+    GameObjectList.push(target);
     collected = false;
+    // console.log(canvas., canvas.height);
 }
-
+var historyMovement;
 function Update(deltaTime) {
     worldMovement = new Vector2(Math.trunc(Axis.Horizontal * Versor[Axis.Horizontal + 1][Axis.Vertical + 1] * speed ), Math.trunc(Axis.Vertical * Versor[Axis.Horizontal + 1][Axis.Vertical + 1] * speed)); 
-
-    console.log(worldMovement);
+    // historyMovement = new Vector2(Versor[Axis.Horizontal + 1][Axis.Vertical + 1] * speed, Versor[Axis.Horizontal + 1][Axis.Vertical + 1] * speed);
+    // console.log(mouseX, mouseY);
+    // console.log(historyMovement);
     player.Transform.x += worldMovement.x;
     player.Transform.y += worldMovement.y;
     
@@ -188,8 +231,9 @@ function Update(deltaTime) {
         player.Animator.orientation = true;
         player.Renderer.orientation = true;
     }
-
-    
+    console.log(worldMovement);
+    target.Transform.x = Math.trunc(mouseX)+player.Transform.x-150;
+    target.Transform.y = Math.trunc(mouseY)+player.Transform.y-150;
     bucketCenter.x = bucket.Transform.x + bucket.Renderer.image.width/2;
     bucketCenter.y = bucket.Transform.y + bucket.Renderer.image.height/2;
 
@@ -218,7 +262,8 @@ function Render() {
         context.drawImage(currObj.Renderer.image, currObj.Transform.x, currObj.Transform.y);
     }
     if(Axis.Horizontal || Axis.Vertical) {
-        if(player.Animator.orientation) {
+        if(mouseX >= 150 + player.Renderer.image.width/2) {
+        // if(player.Animator.orientations) {
             context.drawImage(player.Animator.image, player.Animator.nextImageIndex() * 64, 0, 64, 64, player.Transform.x, player.Transform.y, 64, 64);
         }
         else {
@@ -226,16 +271,28 @@ function Render() {
         }
     }
     else {
-        if(player.Renderer.orientation) {  
+        if(mouseX >= 150 + player.Renderer.image.width/2) {
+        // if(player.Renderer.orientation) {  
             context.drawImage(player.Renderer.image, player.Transform.x, player.Transform.y);
         }
-        else if(!player.Renderer.orientation) {
+        else {
+        // else if(!player.Renderer.orientation) {
             context.drawImage(player.Renderer.mirrorImage, player.Transform.x, player.Transform.y);
         }
     }
     context.beginPath();
     context.ellipse(playerCenter.x, playerCenter.y, 32, 32, 0, 0, 2 * Math.PI);
     context.stroke();
+
+    if(draw) {
+        console.log(endLine.x, endLine.y);
+        context.beginPath();
+        context.moveTo(beginLine.x, beginLine.y);
+        context.lineTo(mouseX+player.Transform.x-150, mouseY+player.Transform.y-150);
+        context.stroke();
+    }
+
+
 }
 
 var lastTime = 0;
