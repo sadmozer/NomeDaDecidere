@@ -22,7 +22,7 @@ const ARROW_DOWN = 83;
 
 const diagMagn = Math.cos(Math.PI / 4);
 // Beatty sequence number
-const speed = 6;
+const speed = 5;
 const flySpeed = 30;
 const arcHeight = 30;
 const s = speed / (Math.sqrt(2)*Math.trunc(speed/Math.sqrt(2)))
@@ -33,11 +33,13 @@ const Versor = [
 ]
 const rect = canvas.getBoundingClientRect();
 
+// Vector2
 function Vector2 (x, y) {
     this.x = x;
     this.y = y;
 }
 
+// Renderer
 function Renderer(src, mirrorsrc) {
     this.orientation = true;
     this.image = new Image();
@@ -49,57 +51,81 @@ function Renderer(src, mirrorsrc) {
         this.mirrorImage = null;
     }
     this.image.src = src;
-} 
+}
 
-function Animator(src, mirrorsrc, frames, width, height) {
+// Animator
+function Animator(animations) {
+    this.animations = animations;
+}
+Animator.prototype.getAnimation = function(name) {
+    return this.animations.find(o => o.name === name).animation;
+}
+
+// Animation
+function Animation(src, mirrorsrc, numFrames, speedFrames, width, height) {
     this.orientation = true;
     this.image = new Image();
     this.mirrorImage = new Image();
     this.mirrorImage.src = mirrorsrc;
     this.image.src = src;
-    this.frames = frames;
+    this.numFrames = numFrames;
     this.width = width;
     this.height = height;
     this.x = 0;
     this.y = 0;
+    this.speedFrames = speedFrames;
 
-    this.nextImageIndex = function () {
-        if(this.orientation) {
-            return (Math.trunc(this.x++/4)) % 8;
-        }
-        else {
-            if(Math.trunc(this.y/4) >= 8) {
-                this.y -= 8*4;
-            }
-            return (8-Math.trunc(this.y++/4)) % 8
-        }
+}
+Animation.prototype.next_imageIndex = function () {
+    var ret = Math.trunc(this.x/this.speedFrames) % this.numFrames;
+    this.x++;
+    if(Math.trunc(this.x/this.speedFrames) >= this.numFrames)
+        this.x = 0;
+    return ret;
+}
+Animation.prototype.next_mirrorImageIndex = function () {
+    var ret = Math.trunc(this.y/this.speedFrames) % this.numFrames;
+    this.y++;
+    return ret;
+}
+Animation.prototype.prev_imageIndex = function () {
+    this.x--;
+    if(this.x < 0) {
+        this.x += this.numFrames*this.speedFrames;
     }
+    return Math.trunc((this.x+1)/this.speedFrames) % this.numFrames;
+}
+Animation.prototype.prev_mirrorImageIndex = function () {
+    this.y--;
+    if(this.y < 0) {
+        this.y += this.numFrames*this.speedFrames;
+    }
+    return Math.trunc((this.y+1)/this.speedFrames) % this.numFrames;
 }
 
+// Gameobject
 function GameObject(Name, Transform, Renderer, Animator) {
     this.name = Name;
     this.Transform = Transform || null;
     this.Renderer = Renderer || null;
     this.Animator = Animator || null;
 
-    this.addComponent = function(CmpName, Cmp) {
-        switch(CmpName) {
-            case "Transform": this.Transform = Cmp;
-                break;
-            case "Renderer": this.Renderer = Cmp;
-                break;
-            case "Animator": this.Animator = Cmp;
-        }
-    };
-
-    this.getState = function() {
-        return this.state;
-    };
-
-    this.setState = function(NewState) {
-       this.state = NewState;
-    };
 }
+GameObject.prototype.addComponent = function(CmpName, Cmp) {
+    switch(CmpName) {
+        case "Transform": this.Transform = Cmp;
+            break;
+        case "Renderer": this.Renderer = Cmp;
+            break;
+        case "Animator": this.Animator = Cmp;
+    }
+};
+GameObject.prototype.getState = function() {
+    return this.state;
+};
+GameObject.prototype.setState = function(NewState) {
+    this.state = NewState;
+};
 
 var flag_down = false;
 var flag = false;
@@ -194,7 +220,6 @@ document.addEventListener('mousemove', MouseMoveManager, false);
 document.addEventListener("wheel", doScroll, false);
 // document.addEventListener("contextmenu", RightClickManager, false);
 
-function GameObjectFactory() {};
 
 function Collectible(options) {
     this.name = options.name || "Collectible";
@@ -203,7 +228,7 @@ function Collectible(options) {
     this.Transform = this.spawn;
     this.Renderer = options.renderer || null;
     this.Animator = options.animator || null;
-
+    
     this.getState = function(){
         return this.state;
     }
@@ -212,8 +237,11 @@ function Collectible(options) {
     }
 }
 function Environment(options) {
-
+    
 }
+
+function GameObjectFactory() {};
+
 GameObjectFactory.prototype.create = function(options) {
     switch(options.type) {
         case "Collectible":
@@ -248,7 +276,13 @@ function Start() {
         name: "Secchio2",
         state: "Idle",
         renderer: new Renderer("Bucket-Idle.png"),
-        spawn: new Vector2(30, 30)
+        spawn: new Vector2(30, 30),
+        animator: new Animator([
+            {name: "Idle", animation: new Animation("Bucket-Idle.png", "Bucket-Idle.png", 1, 4, 32, 32)},
+            {name: "In volo", animation: new Animation("Bucket-Idle.png", "Bucket-Idle.png", 1, 4, 32, 32)},
+            {name: "Trasporto", animation: new Animation("Bucket-Idle.png", "Bucket-Idle.png", 1, 4, 32, 32)},
+            {name: "Atterraggio", animation: new Animation("Bucket-Idle.png", "Bucket-Idle.png", 1, 4, 32, 32)}
+        ])
     });
     
     bucket = CollectibleFactory.create({
@@ -256,7 +290,26 @@ function Start() {
         name: "bucket",
         state: "Idle",
         renderer: new Renderer("Bucket-Idle.png"),
-        spawn: new Vector2(100, 100)
+        spawn: new Vector2(100, 100),
+        animator: new Animator([
+            {name: "Idle", animation: new Animation("Bucket-Idle.png", "Bucket-Idle.png", 1, 4, 32, 32)},
+            {name: "In volo", animation: new Animation("Bucket-Idle.png", "Bucket-Idle.png", 1, 4, 32, 32)},
+            {name: "Trasporto", animation: new Animation("Bucket-Idle.png", "Bucket-Idle.png", 1, 4, 32, 32)},
+            {name: "Atterraggio", animation: new Animation("Bucket-Idle.png", "Bucket-Idle.png", 1, 4, 32, 32)}            
+        ])
+    });
+
+    littleHay = CollectibleFactory.create({
+        goClass: "Collectible",
+        name: "hay1",
+        state: "Idle",
+        renderer: new Renderer("Hay1-Idle.png"),
+        spawn: new Vector2(120, 60),
+        animator: new Animator([
+            {name: "Idle", animation: new Animation("Hay1-Idle.png", "Hay1-Idle.png", 1, 4, 32, 32)},
+            {name: "In volo", animation: new Animation("Hay1-Idle.png", "Hay1-Idle.png", 1, 4, 32, 32)},
+            {name: "Atterraggio", animation: new Animation("Hay1-Landing.png", "Hay1-Landing.png", 9, 7, 32, 32)}
+        ])
     });
     
     beginLine = new Vector2(0, 0);
@@ -265,9 +318,11 @@ function Start() {
     spawn = new Vector2(150, 150);
     vect = new Vector2(0, 0);
     background = new GameObject('Background', new Vector2(0, 0), new Renderer("Grass2.png"));
-    player = new GameObject("Player", new Vector2(spawn.x, spawn.y));
-    player.addComponent("Renderer", new Renderer("Frog_Idle_COLORv1.png", "Frog_Idle_COLORv1 - Flipped.png"));
-    player.addComponent("Animator", new Animator("Frog_Run_COLORv1.png", "Frog_Run_COLORv1 - Flipped.png", 8, 64, 64));
+
+    player = new GameObject("Player", 
+    new Vector2(spawn.x, spawn.y),
+    new Renderer("Frog_Idle_COLORv1.png", "Frog_Idle_COLORv1 - Flipped.png"),
+    new Animation("Frog_Run_COLORv1.png", "Frog_Run_COLORv1 - Flipped.png", 8, 4, 64, 64));
     
     playerCenter = new Vector2(150 + player.Renderer.image.width/2, 150 + player.Renderer.image.height/2)
     
@@ -278,6 +333,7 @@ function Start() {
     GameObjectList.push(background);
     GameObjectList.push(bucket);
     GameObjectList.push(secchio2);
+    GameObjectList.push(littleHay);
     deltaWorldMovement = new Vector2(0, 0);
     worldMovement = new Vector2(0, 0);
 }
@@ -286,6 +342,7 @@ var k = 1;
 var flyStart;
 var flyControl;
 var flyEnd;
+var occupato = false;
 function Update(deltaTime) {
     deltaWorldMovement.x = Math.trunc(Axis.Horizontal * Versor[Axis.Horizontal + 1][Axis.Vertical + 1] * speed);
     deltaWorldMovement.y = Math.trunc(Axis.Vertical * Versor[Axis.Horizontal + 1][Axis.Vertical + 1] * speed); 
@@ -302,18 +359,19 @@ function Update(deltaTime) {
     playerCenter.y = player.Transform.y + player.Renderer.image.height/2
     
     if(draw)
-    player.Animator.orientation = (beginLine.x >= spawn.x + player.Renderer.image.width/2);
+        player.Animator.orientation = (beginLine.x >= spawn.x + player.Renderer.image.width/2);
     else
         player.Animator.orientation = (mouseX >= spawn.x + player.Renderer.image.width/2);
     
-    var CollectibleList = [secchio2, bucket];
+    var CollectibleList = [secchio2, bucket, littleHay];
     CollectibleList.forEach(function(element) {
     
     switch(element.getState()) {
         case "Idle": 
             if(Math.hypot(element.Transform.x + element.Renderer.image.width/2 - playerCenter.x, 
-                        element.Transform.y + element.Renderer.image.width/2 - playerCenter.y) < 30) {
+                        element.Transform.y + element.Renderer.image.width/2 - playerCenter.y) < 30 && !occupato) {
                 element.setState("Trasporto");
+                occupato = true;
             }
             else {
                 element.setState("Idle");
@@ -323,6 +381,7 @@ function Update(deltaTime) {
             if(flag && Math.sqrt(Math.pow(beginLine.x-endLine.x, 2) + Math.pow(beginLine.y-endLine.y, 2))>20) {
                 element.setState("In volo");
                 k = 1;
+                occupato = false;
                 vect.x = beginLine.x-endLine.x;
                 vect.y = beginLine.y-endLine.y;
                 flyStart = new Vector2(player.Transform.x+deltaWorldMovement.x, player.Transform.y+deltaWorldMovement.y);
@@ -344,9 +403,15 @@ function Update(deltaTime) {
                 element.setState("In volo");
             }
             else {
-                element.setState("Idle");
+                element.setState("Atterraggio");
             }
             break;
+        case "Atterraggio": 
+            console.log(element.Animator.getAnimation("Atterraggio").x);
+            if(element.Animator.getAnimation("Atterraggio").x >= element.Animator.getAnimation("Atterraggio").numFrames*element.Animator.getAnimation("Atterraggio").speedFrames-1) {
+                element.setState("Idle");
+            }
+        break; 
         default:
             console.log("NON GESTITO!");
             break;
@@ -359,30 +424,58 @@ function Update(deltaTime) {
 function Render() {
     context.translate(-deltaWorldMovement.x, -deltaWorldMovement.y);
     context.putImageData(emptyCanvas, 0, 0);
+
     for(var i = 0; i < GameObjectList.length; i++) {
         var currObj = GameObjectList[i];
-        context.drawImage(currObj.Renderer.image, currObj.Transform.x, currObj.Transform.y);
+        if(currObj.name != "Background") {
+            switch(currObj.getState()){
+                case "Idle":
+                case "Trasporto": 
+                    context.drawImage(currObj.Renderer.image, currObj.Transform.x, currObj.Transform.y);
+                break;
+                case "In volo": 
+                    var currObj_Animator = currObj.Animator.getAnimation("In volo");
+                    context.drawImage(currObj_Animator.image, 
+                        currObj_Animator.next_imageIndex() * currObj_Animator.width, 
+                        0, 
+                        currObj_Animator.width, 
+                        currObj_Animator.height, 
+                        currObj.Transform.x, 
+                        currObj.Transform.y, 
+                        currObj_Animator.width, 
+                        currObj_Animator.height);
+                break;
+                case "Atterraggio": 
+                    var currObj_Animator = currObj.Animator.getAnimation("Atterraggio");
+                    context.drawImage(currObj_Animator.image, 
+                        currObj_Animator.next_imageIndex() * currObj_Animator.width, 
+                        0, 
+                        currObj_Animator.width, 
+                        currObj_Animator.height, 
+                        currObj.Transform.x, 
+                        currObj.Transform.y, 
+                        currObj_Animator.width, 
+                        currObj_Animator.height);
+                break;
+                default: console.log("Render: errore non gestito!"); break;
+            }
+        }
+        else
+            context.drawImage(currObj.Renderer.image, currObj.Transform.x, currObj.Transform.y);
     }
+    
     if(Axis.Horizontal || Axis.Vertical) {
         if(player.Animator.orientation && (Axis.Horizontal == 1 || Axis.Vertical)) {
-            context.drawImage(player.Animator.image, Math.trunc(player.Animator.x/4) % 8 * 64, 0, 64, 64, player.Transform.x, player.Transform.y, 64, 64);
-            player.Animator.x = (player.Animator.x + 1);
+            context.drawImage(player.Animator.image, player.Animator.next_imageIndex() * 64, 0, 64, 64, player.Transform.x, player.Transform.y, 64, 64);
         }
         else if(!player.Animator.orientation && (Axis.Horizontal == 1 || Axis.Vertical)){
-            context.drawImage(player.Animator.mirrorImage, Math.trunc(player.Animator.y/4) % 8 * 64, 0, 64, 64, player.Transform.x, player.Transform.y, 64, 64);
-            player.Animator.y = (player.Animator.y + 1);
+            context.drawImage(player.Animator.mirrorImage, player.Animator.next_mirrorImageIndex() * 64, 0, 64, 64, player.Transform.x, player.Transform.y, 64, 64);
         }
         else if(!player.Animator.orientation && (Axis.Horizontal == -1)){
-            context.drawImage(player.Animator.mirrorImage, Math.trunc(player.Animator.y/4) % 8 * 64, 0, 64, 64, player.Transform.x, player.Transform.y, 64, 64);
-            player.Animator.y = (player.Animator.y - 1);
-            if(player.Animator.y < 0)
-                player.Animator.y+=8*4;
+            context.drawImage(player.Animator.mirrorImage, player.Animator.prev_mirrorImageIndex() * 64, 0, 64, 64, player.Transform.x, player.Transform.y, 64, 64);
         }
         else if(player.Animator.orientation && (Axis.Horizontal == -1)){
-            context.drawImage(player.Animator.image, Math.trunc(player.Animator.x/4) % 8 * 64, 0, 64, 64, player.Transform.x, player.Transform.y, 64, 64);
-            player.Animator.x = (player.Animator.x - 1);
-            if(player.Animator.x < 0)
-                player.Animator.x+=8*4;
+            context.drawImage(player.Animator.image, player.Animator.prev_imageIndex() * 64, 0, 64, 64, player.Transform.x, player.Transform.y, 64, 64);
         }
     }
     else {
@@ -396,14 +489,6 @@ function Render() {
     // context.beginPath();
     // context.ellipse(playerCenter.x, playerCenter.y, Math.abs(beginLine.x-mouseX), Math.abs(beginLine.y-mouseY)/2, 0, 0, 2 * Math.PI);
     // context.stroke();
-
-    // context.beginPath();
-    // context.ellipse(playerCenter.x, playerCenter.y, Math.abs(beginLine.x-mouseX), Math.abs(beginLine.y-mouseY)/2, 0, 0, 2 * Math.PI);
-    // context.stroke();
-
-    context.beginPath();
-    context.ellipse(playerCenter.x, playerCenter.y, 32, 32/1.2, 0, 0, 2 * Math.PI);
-    context.stroke();
 
     if(draw) {
         context.beginPath();
