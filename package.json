@@ -1,0 +1,22 @@
+{
+  "name": "gioco",
+  "version": "1.0.0",
+  "description": "Gioco in JS",
+  "main": "Game.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sadmozer/NomeDaDecidere.git"
+  },
+  "author": "Nick",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sadmozer/NomeDaDecidere/issues"
+  },
+  "homepage": "https://github.com/sadmozer/NomeDaDecidere#readme",
+  "dependencies": {
+    "pixi.js": "^4.8.7"
+  }
+}

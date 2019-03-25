@@ -3,21 +3,31 @@ function Vector2 (x, y) {
     this.x = x;
     this.y = y;
 }
+Vector2.plus = function(v1, v2) {
+    return new Vector2(v1.x+v2.x, v1.y+v2.y);
+}
+Vector2.minus = function(v1, v2) {
+    return new Vector2(v1.x-v2.x, v1.y-v2.y);
+}
+Vector2.magnitude = function(vect) {
+    return Math.sqrt(Math.pow(vect.x, 2) + Math.pow(vect.y, 2));
+}
 
 // Renderer
 function Renderer(src, mirrorsrc, width, height) {
     this.orientation = true;
     this.width = width;
     this.height = height;
-    this.image = new Image();
-    if(mirrorsrc) {
-        this.mirrorImage = new Image();
-        this.mirrorImage.src = mirrorsrc;
-    }
-    else {
-        this.mirrorImage = null;
-    }
-    this.image.src = src;
+    this.image = src;
+    this.mirrorImage = mirrorsrc;
+    // if(mirrorsrc) {
+    //     this.mirrorImage = new Image();
+        // this.mirrorImage.src = mirrorsrc;
+    // }
+    // else {
+    //     this.mirrorImage = null;
+    // }
+    // this.image.src = src;
 }
 
 // Animator
@@ -31,17 +41,14 @@ Animator.prototype.getAnimation = function(name) {
 // Animation
 function Animation(src, mirrorsrc, numFrames, speedFrames, width, height) {
     this.orientation = true;
-    this.image = new Image();
-    this.mirrorImage = new Image();
-    this.mirrorImage.src = mirrorsrc;
-    this.image.src = src;
+    this.image = src;
+    this.mirrorImage = mirrorsrc;
     this.numFrames = numFrames;
     this.width = width;
     this.height = height;
     this.x = 0;
     this.y = 0;
     this.speedFrames = speedFrames;
-
 }
 Animation.prototype.next_imageIndex = function () {
     var ret = Math.trunc(this.x/this.speedFrames) % this.numFrames;
@@ -88,7 +95,7 @@ function Collectible(options) {
     this.Name = options.Name || "Collectible";
     this.State = options.State || "Idle";
     this.Spawn = options.Spawn || new Vector2(0,0);
-    this.Transform = this.Spawn;
+    this.Transform = options.Spawn;
     this.Renderer = options.Renderer || null;
     this.Animator = options.Animator || null;
     

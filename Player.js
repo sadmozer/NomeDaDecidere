@@ -7,21 +7,20 @@ var SingletonPlayer = (function(){
                 Renderer: options.Renderer,
                 Animator: options.Animator,
                 Spawn: options.Spawn,
-                Transform: options.Spawn
+                Transform: new Vector2(options.Spawn.x, options.Spawn.y)
         });
         ret.centerTransform = new Vector2(ret.Spawn.x + ret.Renderer.width/2, ret.Spawn.y + ret.Renderer.height/2);
         
         ret.Update = function(deltaWorldMovement) {
             this.Transform.x += deltaWorldMovement.x;
             this.Transform.y += deltaWorldMovement.y;
-            
             this.centerTransform.x += deltaWorldMovement.x;
             this.centerTransform.y += deltaWorldMovement.y;
 
             if(draw)
-                this.Animator.orientation = (InputController.getBeginLine().x >= spawn.x + this.Renderer.width/2);
+                this.Animator.orientation = (InputController.getBeginLine().x >= this.Spawn.x + this.Renderer.width/2);
             else
-                this.Animator.orientation = (InputController.getMouseX() >= spawn.x + this.Renderer.width/2);
+                this.Animator.orientation = (InputController.getMouseX() >= this.Spawn.x + this.Renderer.width/2);
         };
         ret.Render = function(deltaWorldMovement) {
             if(InputController.getAxis().Horizontal || InputController.getAxis().Vertical) {
