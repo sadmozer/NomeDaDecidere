@@ -8,6 +8,8 @@ var SingletonInputController = (function(){
         var Keys = {Space: false, ArrowUp: false, ArrowDown: false, ArrowRight: false, ArrowLeft: false};
         var beginLine = new Vector2(0, 0);
         var endLine = new Vector2(0, 0);
+        var rClick = false;
+        var lClick = false;
 
         function KeyDownManager(event) {
             event.preventDefault();
@@ -68,15 +70,22 @@ var SingletonInputController = (function(){
         }
         
         function MouseDownManager(event) {
-            beginLine.x = Math.trunc(event.clientX-rect.left);
-            beginLine.y = Math.trunc(event.clientY-rect.top);
-            draw = true;
+            if(event.button === 0) {
+                beginLine.x = Math.trunc(event.clientX-rect.left);
+                beginLine.y = Math.trunc(event.clientY-rect.top);
+                draw = true;
+            }
         }
         function MouseUpManager(event) {
-            endLine.x = Math.trunc(event.clientX-rect.left);
-            endLine.y = Math.trunc(event.clientY-rect.top);
-            draw = false;
-            flag = true;
+            if(event.button === 0) {
+                endLine.x = Math.trunc(event.clientX-rect.left);
+                endLine.y = Math.trunc(event.clientY-rect.top);
+                draw = false;
+                lClick = true;
+            }
+            else if(event.button === 2) {
+                rClick = true;
+            }
         }
         
         function MouseMoveManager(event) {
@@ -87,7 +96,7 @@ var SingletonInputController = (function(){
             event.preventDefault();
         }
         
-        function contextmenu(event) {
+        function RightClickManager(event) {
             event.preventDefault();
         }
 
@@ -114,6 +123,18 @@ var SingletonInputController = (function(){
         function getKeys() {
             return Keys;
         }
+        function getRClick() {
+            return rClick;
+        }
+        function setRClick(b) {
+            rClick = b;
+        }
+        function getLClick() {
+            return lClick;
+        }
+        function setLClick(b) {
+            lClick = b;
+        }
         return {
             getMouseX: getMouseX,
             getMouseY: getMouseY,
@@ -121,14 +142,18 @@ var SingletonInputController = (function(){
             getEndLine: getEndLine,
             getAxis: getAxis,
             getKeys: getKeys,
+            getRClick: getRClick,
+            setRClick: setRClick,
+            getLClick: getLClick,
+            setLClick: setLClick,
             Start: function() {
                 document.addEventListener('keydown', KeyDownManager, false);
                 document.addEventListener('keyup', KeyUpManager, false);
                 document.addEventListener('mousedown', MouseDownManager, false);
                 document.addEventListener('mouseup', MouseUpManager, false);
                 document.addEventListener('mousemove', MouseMoveManager, false);
-                document.addEventListener("wheel", doScroll, false);
-                // document.addEventListener("contextmenu", RightClickManager, false);
+                document.addEventListener("wheel", doScroll, {passive: false});
+                document.addEventListener("contextmenu", RightClickManager, false);
             }
         }
     }

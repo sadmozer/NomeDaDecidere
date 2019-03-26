@@ -23,7 +23,7 @@ const Versor = [
 ]
 
 var flag_down = false;
-var flag = false;
+
 
 var beginLine;
 var endLine;
@@ -34,20 +34,10 @@ var deltaWorldMovement;
 var worldMovement;
 var collected;
 var secchio2;
+var goat1;
 var vect;
 var c;
 
-var IMAGES_N = [
-    'Bucket-Idle', 
-    'Hay1-Idle', 
-    'Hay1-Landing', 
-    'Grass1', 
-    'Frog_Idle_COLORv1', 
-    'Frog_Idle_COLORv1 - Flipped',
-    'Frog_Run_COLORv1',
-    'Frog_Run_COLORv1 - Flipped',
-    'Grass2'
-];
 var result = {};
 function Loading(names, callback) {
     var n;
@@ -70,46 +60,49 @@ function Loading(names, callback) {
 function Start(IMAGES) {
     InputController.Start();
     secchio2 = GameObjectFactory.create({
-        GoClass: "Collectible",
-        Name: "Secchio2",
+        GoClass: "Bucket",
         State: "Idle",
-        Renderer: new Renderer(IMAGES["Bucket-Idle"], IMAGES["Bucket-Idle"], 32, 32),
-        Spawn: new Vector2(30, 30),
-        Animator: new Animator([
-            {name: "Idle", animation: new Animation(IMAGES["Bucket-Idle"], IMAGES["Bucket-Idle"], 1, 4, 32, 32)},
-            {name: "In volo", animation: new Animation(IMAGES["Bucket-Idle"], IMAGES["Bucket-Idle"], 1, 4, 32, 32)},
-            {name: "Trasporto", animation: new Animation(IMAGES["Bucket-Idle"], IMAGES["Bucket-Idle"], 1, 4, 32, 32)},
-            {name: "Atterraggio", animation: new Animation(IMAGES["Bucket-Idle"], IMAGES["Bucket-Idle"], 1, 4, 32, 32)}
-        ])
+        Images: IMAGES,
+        Name: "Secchio2",
+        Spawn: new Vector2(30, 30)
     });
     
     bucket = GameObjectFactory.create({
-        GoClass: "Collectible",
-        Name: "bucket",
+        GoClass: "Bucket",
         State: "Idle",
-        Renderer: new Renderer(IMAGES["Bucket-Idle"], IMAGES["Bucket-Idle"], 32, 32),
-        Spawn: new Vector2(100, 100),
-        Animator: new Animator([
-            {name: "Idle", animation: new Animation(IMAGES["Bucket-Idle"], IMAGES["Bucket-Idle"], 1, 4, 32, 32)},
-            {name: "In volo", animation: new Animation(IMAGES["Bucket-Idle"], IMAGES["Bucket-Idle"], 1, 4, 32, 32)},
-            {name: "Trasporto", animation: new Animation(IMAGES["Bucket-Idle"], IMAGES["Bucket-Idle"], 1, 4, 32, 32)},
-            {name: "Atterraggio", animation: new Animation(IMAGES["Bucket-Idle"], IMAGES["Bucket-Idle"], 1, 4, 32, 32)}            
-        ])
+        Images: IMAGES,
+        Name: "bucket",
+        // Renderer: new Renderer(IMAGES["Bucket-Idle"], IMAGES["Bucket-Idle"], 32, 32),
+        Spawn: new Vector2(100, 100)
+        // Animator: new Animator([
+        //     {name: "Idle", animation: new Animation(IMAGES["Bucket-Idle"], IMAGES["Bucket-Idle"], 1, 4, 32, 32)},
+        //     {name: "In volo", animation: new Animation(IMAGES["Bucket-Idle"], IMAGES["Bucket-Idle"], 1, 4, 32, 32)},
+        //     {name: "Trasporto", animation: new Animation(IMAGES["Bucket-Idle"], IMAGES["Bucket-Idle"], 1, 4, 32, 32)},
+        //     {name: "Atterraggio", animation: new Animation(IMAGES["Bucket-Idle"], IMAGES["Bucket-Idle"], 1, 4, 32, 32)}            
+        // ])
     });
 
     littleHay = GameObjectFactory.create({
-        GoClass: "Collectible",
-        Name: "hay1",
+        GoClass: "LittleHay",
         State: "Idle",
-        Renderer: new Renderer(IMAGES["Hay1-Idle"], IMAGES["Hay1-Idle"], 32, 32),
-        Spawn: new Vector2(120, 60),
-        Animator: new Animator([
-            {name: "Idle", animation: new Animation(IMAGES["Hay1-Idle"], IMAGES["Hay1-Idle"], 1, 4, 32, 32)},
-            {name: "In volo", animation: new Animation(IMAGES["Hay1-Idle"], IMAGES["Hay1-Idle"], 1, 4, 32, 32)},
-            {name: "Atterraggio", animation: new Animation(IMAGES["Hay1-Landing"], IMAGES["Hay1-Landing"], 9, 7, 32, 32)}
-        ])
+        Images: IMAGES,
+        Name: "hay1",
+        // Renderer: new Renderer(IMAGES["Hay1-Idle"], IMAGES["Hay1-Idle"], 32, 32),
+        Spawn: new Vector2(120, 60)
+        // Animator: new Animator([
+        //     {name: "Idle", animation: new Animation(IMAGES["Hay1-Idle"], IMAGES["Hay1-Idle"], 1, 4, 32, 32)},
+        //     {name: "In volo", animation: new Animation(IMAGES["Hay1-Idle"], IMAGES["Hay1-Idle"], 1, 4, 32, 32)},
+        //     {name: "Atterraggio", animation: new Animation(IMAGES["Hay1-Landing"], IMAGES["Hay1-Landing"], 9, 7, 32, 32)}
+        // ])
     });
     
+    goat1 = GameObjectFactory.create({
+        GoClass: "Goat",
+        State: "Idle",
+        Images: IMAGES,
+        Name: "G1",
+        Spawn: new Vector2(70, 100)
+    });
     beginLine = new Vector2(0, 0);
     endLine = new Vector2(0, 0);
     draw = false;
@@ -119,14 +112,21 @@ function Start(IMAGES) {
         GoClass: "Environment",
         Name: "Background",
         State: "Idle",
-        Renderer: new Renderer(IMAGES["Grass2"], IMAGES["Grass2"]),
+        Renderer: new Renderer(IMAGES["Grass2"], IMAGES["Grass2"], 384, 384),
         Spawn: new Vector2(0, 0)
     });
     player = SingletonPlayer.getInstance({
         Name: "Player",
         Spawn: new Vector2(150, 150),
         Renderer: new Renderer(IMAGES["Frog_Idle_COLORv1"], IMAGES["Frog_Idle_COLORv1 - Flipped"], 64, 64),
-        Animator: new Animation(IMAGES["Frog_Run_COLORv1"], IMAGES["Frog_Run_COLORv1 - Flipped"], 8, 4, 64, 64)
+        Animator: new Animation({
+            image: IMAGES["Frog_Run_COLORv1"], 
+            mirrorImage: IMAGES["Frog_Run_COLORv1 - Flipped"], 
+            numFrames: 8, 
+            speedFrames:4, 
+            height:64, 
+            width: 64
+        })
     });
     
     emptyCanvas = context.createImageData(canvas.width, canvas.height);
@@ -134,11 +134,14 @@ function Start(IMAGES) {
         emptyCanvas.data[i] = 0;
     }
     GameObjectList.push(background);
+    GameObjectList.push(goat1);
     GameObjectList.push(bucket);
     GameObjectList.push(secchio2);
     GameObjectList.push(littleHay);
     deltaWorldMovement = new Vector2(0, 0);
     worldMovement = new Vector2(0, 0);
+    CollectibleList = [secchio2, bucket, littleHay, goat1];
+    console.log(player);
 }
 var historyMovement;
 var k = 1;
@@ -158,25 +161,57 @@ function Update(deltaTime) {
     
     player.Update(deltaWorldMovement);
     
-    CollectibleList = [secchio2, bucket, littleHay];
-    CollectibleList.forEach(updateCollectible);
+    for (let i = 0; i < CollectibleList.length; i++) {
+        CollectibleList[i].Update(InputController, GameObjectList, player);
+    }
+    // CollectibleList.forEach(updateCollectible);
     
-    if(flag)
-    flag = false;
+    if(InputController.getLClick())
+        InputController.setLClick(false);
+    if(InputController.getRClick())
+        InputController.setRClick(false);
 }
 function Render() {
     context.translate(-deltaWorldMovement.x, -deltaWorldMovement.y);
     context.putImageData(emptyCanvas, 0, 0);
+    
+    context.drawImage(background.Renderer.image, background.Transform.x, background.Transform.y);
 
-    for(var i = 0; i < GameObjectList.length; i++) {
-        var currObj = GameObjectList[i];
+
+    for(var i = 0; i < CollectibleList.length; i++) {
+        var currObj = CollectibleList[i];
+        // console.log(currObj);
         switch(currObj.getState()){
-            case "Idle":
-            case "Trasporto": 
-                context.drawImage(currObj.Renderer.image, currObj.Transform.x, currObj.Transform.y);
+            case "Idle": 
+            var currObj_Animator = currObj.Animator.getAnimation("Idle");
+                // console.log(curkrObj);
+                context.drawImage(currObj_Animator.image, 
+                    currObj_Animator.next_imageIndex() * currObj_Animator.width, 
+                    0, 
+                    currObj_Animator.width, 
+                    currObj_Animator.height, 
+                    currObj.Transform.x, 
+                    currObj.Transform.y, 
+                    currObj_Animator.width, 
+                    currObj_Animator.height);
             break;
-            case "In volo": 
+            case "Trasporto": 
+                var currObj_Animator = currObj.Animator.getAnimation("Trasporto");
+                // console.log(curkrObj);
+                context.drawImage(currObj_Animator.image, 
+                    currObj_Animator.next_imageIndex() * currObj_Animator.width, 
+                    0, 
+                    currObj_Animator.width, 
+                    currObj_Animator.height, 
+                    currObj.Transform.x, 
+                    currObj.Transform.y, 
+                    currObj_Animator.width, 
+                    currObj_Animator.height);
+                // context.drawImage(currObj.Renderer.image, currObj.Transform.x, currObj.Transform.y);
+            break;
+            case "In volo":
                 var currObj_Animator = currObj.Animator.getAnimation("In volo");
+                // console.log(curkrObj);
                 context.drawImage(currObj_Animator.image, 
                     currObj_Animator.next_imageIndex() * currObj_Animator.width, 
                     0, 
@@ -214,8 +249,6 @@ function Render() {
     }
 }
 
-
-
 var lastTime = 0;
 function GameLoop(time = 0) {
     deltaTime = time - lastTime;
@@ -234,83 +267,3 @@ function RunGame(IMAGES) {
 
 console.log("Loading..");
 Loading(IMAGES_N, RunGame);
-
-
-
-function Bezier3(start, control, end, t) {
-    var ret = new Vector2(Math.trunc(((1 - t)*(1 - t) * start.x) + (2 * t * (1 - t) * control.x) + (t * t * end.x)),
-    Math.trunc(((1 - t)*(1 - t) * start.y) + (2 * t * (1 - t) * control.y) + (t * t * end.y)));
-    return ret;
-}
-
-function isCollide(a, b) {
-    // console.log(a.Transform.y + a.Renderer.height);
-    return !(
-        ((a.Transform.y + a.Renderer.height) < (b.Transform.y)) ||
-        (a.Transform.y > (b.Transform.y + b.Renderer.height)) ||
-        ((a.Transform.x + a.Renderer.width) < b.Transform.x) ||
-        (a.Transform.x > (b.Transform.x + b.Renderer.width))
-    );
-}
-
-function updateCollectible(element) {
-    switch(element.getState()) {
-        case "Idle":
-        if(Math.hypot(element.Transform.x + element.Renderer.width/2 - player.centerTransform.x, 
-            element.Transform.y + element.Renderer.width/2 - player.centerTransform.y) < 30 && !occupato) {
-                element.setState("Trasporto");
-                occupato = true;
-            }
-            else {
-                element.setState("Idle");
-            }
-            break;
-            case "Trasporto":
-            
-            if(flag && Vector2.magnitude(Vector2.minus(InputController.getBeginLine(), InputController.getEndLine())) > THROW_THRESHOLD) {
-                element.setState("In volo");
-                k = 1;
-                occupato = false;
-                vect.x = InputController.getBeginLine().x-InputController.getEndLine().x;
-                vect.y = InputController.getBeginLine().y-InputController.getEndLine().y;
-                flyStart = new Vector2(player.Transform.x+deltaWorldMovement.x, player.Transform.y+deltaWorldMovement.y);
-                flyControl = new Vector2(vect.x/2 + player.Transform.x, vect.y/2/1.2 + player.Transform.y-ARC_HEIGHT);
-                flyEnd = new Vector2(vect.x + player.Transform.x, vect.y/1.2 + player.Transform.y + 30);
-            }
-            else {
-                element.Transform.x = player.Transform.x;
-                element.Transform.y = player.Transform.y;
-            }
-            break;
-        case "In volo":
-            var ok = false;
-            for(var i = 0; i < CollectibleList.length; i++) {
-                if(element !== CollectibleList[i] && isCollide(element, CollectibleList[i])) {
-                    ok = true;
-                }
-            }
-            if(ok) {
-                element.setState("Atterraggio"); 
-            }
-            else
-            if(k < FLY_SPEED){
-                var fly = Bezier3(flyStart, flyControl, flyEnd, k/FLY_SPEED);
-                element.Transform.x = fly.x;
-                element.Transform.y = fly.y;
-                k++;
-                element.setState("In volo");
-            }
-            else {
-                element.setState("Atterraggio");
-            }
-            break;
-        case "Atterraggio": 
-            if(element.Animator.getAnimation("Atterraggio").x >= element.Animator.getAnimation("Atterraggio").numFrames*element.Animator.getAnimation("Atterraggio").speedFrames-1) {
-                element.setState("Idle");
-            }
-        break; 
-        default:
-            console.log("NON GESTITO!");
-            break;
-    }
-}

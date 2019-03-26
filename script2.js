@@ -20,14 +20,6 @@ function Renderer(src, mirrorsrc, width, height) {
     this.height = height;
     this.image = src;
     this.mirrorImage = mirrorsrc;
-    // if(mirrorsrc) {
-    //     this.mirrorImage = new Image();
-        // this.mirrorImage.src = mirrorsrc;
-    // }
-    // else {
-    //     this.mirrorImage = null;
-    // }
-    // this.image.src = src;
 }
 
 // Animator
@@ -39,16 +31,16 @@ Animator.prototype.getAnimation = function(name) {
 }
 
 // Animation
-function Animation(src, mirrorsrc, numFrames, speedFrames, width, height) {
+function Animation(options) {
     this.orientation = true;
-    this.image = src;
-    this.mirrorImage = mirrorsrc;
-    this.numFrames = numFrames;
-    this.width = width;
-    this.height = height;
+    this.image = options.image;
+    this.mirrorImage = options.mirrorImage;
+    this.numFrames = options.numFrames;
+    this.width = options.width;
+    this.height = options.height;
     this.x = 0;
     this.y = 0;
-    this.speedFrames = speedFrames;
+    this.speedFrames = options.speedFrames;
 }
 Animation.prototype.next_imageIndex = function () {
     var ret = Math.trunc(this.x/this.speedFrames) % this.numFrames;
@@ -77,20 +69,6 @@ Animation.prototype.prev_mirrorImageIndex = function () {
     return Math.trunc((this.y+1)/this.speedFrames) % this.numFrames;
 }
 
-// Gameobject
-function GameObject(Name, State,Transform, Renderer, Animator) {
-    this.Name = Name;
-    this.State = State;
-    this.Transform = Transform || null;
-    this.Renderer = Renderer || null;
-    this.Animator = Animator || null;
-}
-GameObject.prototype.getState = function() {
-    return this.state;
-};
-GameObject.prototype.setState = function(NewState) {
-    this.state = NewState;
-};
 function Collectible(options) {
     this.Name = options.Name || "Collectible";
     this.State = options.State || "Idle";
@@ -98,7 +76,6 @@ function Collectible(options) {
     this.Transform = options.Spawn;
     this.Renderer = options.Renderer || null;
     this.Animator = options.Animator || null;
-    
     this.getState = function(){
         return this.State;
     }
@@ -111,6 +88,15 @@ function GameObjectFactory() {};
 
 GameObjectFactory.prototype.create = function(options) {
     switch(options.GoClass) {
+        case "Bucket":
+            this.GoClass = Bucket;
+        break;
+        case "LittleHay":
+            this.GoClass = LittleHay;
+        break;
+        case "Goat":
+            this.GoClass = Goat;
+        break;
         default: 
             this.GoClass = Collectible;
         break;
@@ -119,3 +105,19 @@ GameObjectFactory.prototype.create = function(options) {
 }
 
 var GameObjectFactory = new GameObjectFactory();
+
+function Bezier3(start, control, end, t) {
+    var ret = new Vector2(Math.trunc(((1 - t)*(1 - t) * start.x) + (2 * t * (1 - t) * control.x) + (t * t * end.x)),
+    Math.trunc(((1 - t)*(1 - t) * start.y) + (2 * t * (1 - t) * control.y) + (t * t * end.y)));
+    return ret;
+}
+
+function isCollide(a, b) {
+    // console.log(a.Transform.y + a.Renderer.height);
+    return !(
+        ((a.Transform.y + a.Renderer.height) < (b.Transform.y)) ||
+        (a.Transform.y > (b.Transform.y + b.Renderer.height)) ||
+        ((a.Transform.x + a.Renderer.width) < b.Transform.x) ||
+        (a.Transform.x > (b.Transform.x + b.Renderer.width))
+    );
+}

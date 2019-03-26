@@ -52,3 +52,16 @@ const THROW_THRESHOLD = 30;
 const SPEED = 5;
 const FLY_SPEED = 30;
 const ARC_HEIGHT = 40;
+
+const IMAGES_N = [
+    'Bucket-Idle', 
+    'Hay1-Idle', 
+    'Hay1-Landing', 
+    'Grass1', 
+    'Frog_Idle_COLORv1', 
+    'Frog_Idle_COLORv1 - Flipped',
+    'Frog_Run_COLORv1',
+    'Frog_Run_COLORv1 - Flipped',
+    'Grass2',
+    'Goat1-Idle'
+];

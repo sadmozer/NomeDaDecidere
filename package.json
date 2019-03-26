@@ -15,8 +15,5 @@
   "bugs": {
     "url": "https://github.com/sadmozer/NomeDaDecidere/issues"
   },
-  "homepage": "https://github.com/sadmozer/NomeDaDecidere#readme",
-  "dependencies": {
-    "pixi.js": "^4.8.7"
-  }
+  "homepage": "https://github.com/sadmozer/NomeDaDecidere#readme"
 }
