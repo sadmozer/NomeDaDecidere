@@ -10,9 +10,10 @@ var SingletonPlayer = (function(){
                 Spawn: options.Spawn,
                 Transform: new Vector2(options.Spawn.x, options.Spawn.y)
         });
-        // console.log(ret);
-        ret.centerTransform = new Vector2(ret.Spawn.x + ret.Renderer.width/2, ret.Spawn.y + ret.Renderer.height/2);
         
+        ret.centerTransform = new Vector2(ret.Spawn.x + ret.Renderer.width/2, ret.Spawn.y + ret.Renderer.height/2);
+        ret.occupato = false;
+
         ret.Update = function(deltaWorldMovement) {
             this.Transform.x += deltaWorldMovement.x;
             this.Transform.y += deltaWorldMovement.y;

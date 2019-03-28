@@ -121,3 +121,7 @@ function isCollide(a, b) {
         (a.Transform.x > (b.Transform.x + b.Renderer.width))
     );
 }
+
+function compare(a, b) {
+    return a.Transform.y >= b.Transform.y
+}

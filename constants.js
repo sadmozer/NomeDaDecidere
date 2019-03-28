@@ -63,5 +63,12 @@ const IMAGES_N = [
     'Frog_Run_COLORv1',
     'Frog_Run_COLORv1 - Flipped',
     'Grass2',
-    'Goat1-Idle'
+    'Goat1-Idle',
+    'Goat2-Idle',
+    'Grass3'
 ];
+
+//     context.webkitImageSmoothingEnabled = false;
+    // context.mozImageSmoothingEnabled = false;
+    // context.scale(2, 2);
+    // context.imageSmoothingEnabled = false;

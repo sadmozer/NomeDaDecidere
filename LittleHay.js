@@ -6,6 +6,10 @@ function LittleHay (options) {
     this.Transform = options.Spawn;
     this.Renderer = new Renderer(this.IMAGES["Hay1-Idle"], this.IMAGES["Hay1-Idle"], 32, 32);
 
+    this.flyStart = null;
+    this.flyControl = null;
+    this.flyEnd = null;
+
     this.Animator = new Animator([
         {name: "Idle",
         animation: new Animation({
@@ -50,13 +54,15 @@ function LittleHay (options) {
         this.State = State;
     }
 
-    this.Update = function (InputController, GameObjectList, player) {
+    this.Update = function (InputController, GameObjectList, player, backShadows) {
         switch(this.getState()) {
             case "Idle":
             if(Math.hypot(this.Transform.x + this.Renderer.width/2 - player.centerTransform.x, 
-                this.Transform.y + this.Renderer.width/2 - player.centerTransform.y) < 30 && !occupato) {
+                this.Transform.y + this.Renderer.width/2 - player.centerTransform.y) < 30 
+                && !player.occupato
+                && (InputController.getAxis().Horizontal != 0 || InputController.getAxis().Vertical != 0)) {
                     this.setState("Trasporto");
-                    occupato = true;
+                    player.occupato = true;
                     GameObjectList.splice(GameObjectList.indexOf(this), 1);
                     GameObjectList.push(this);
                 }
@@ -75,17 +81,17 @@ function LittleHay (options) {
                         this.Transform.y = player.Transform.y + 24;
                     }
                     this.setState("Idle");
-                    occupato = false;
+                    player.occupato = false;
                 }
                 else if(InputController.getLClick() && Vector2.magnitude(Vector2.minus(InputController.getBeginLine(), InputController.getEndLine())) > THROW_THRESHOLD) {
                     this.setState("In volo");
-                    k = 1;
-                    occupato = false;
+                    this.k = 1;
+                    player.occupato = false;
                     vect.x = InputController.getBeginLine().x-InputController.getEndLine().x;
                     vect.y = InputController.getBeginLine().y-InputController.getEndLine().y;
-                    flyStart = new Vector2(player.Transform.x+deltaWorldMovement.x, player.Transform.y+deltaWorldMovement.y);
-                    flyControl = new Vector2(vect.x/2 + player.Transform.x, vect.y/2/1.2 + player.Transform.y-ARC_HEIGHT);
-                    flyEnd = new Vector2(vect.x + player.Transform.x, vect.y/1.2 + player.Transform.y + 30);
+                    this.flyStart = new Vector2(player.Transform.x+deltaWorldMovement.x, player.Transform.y+deltaWorldMovement.y);
+                    this.flyControl = new Vector2(vect.x/2 + player.Transform.x, vect.y/2/1.2 + player.Transform.y-ARC_HEIGHT);
+                    this.flyEnd = new Vector2(vect.x + player.Transform.x, vect.y/1.2 + player.Transform.y + 30);
                 }
                 else {
                     this.Transform.x = player.Transform.x;
@@ -93,21 +99,35 @@ function LittleHay (options) {
                 }
                 break;
             case "In volo":
-                var ok = false;
-                for(var i = 0; i < CollectibleList.length; i++) {
+                var ok = null
+                var i = 0;
+                while(i < CollectibleList.length && !ok) {
                     if(this !== CollectibleList[i] && isCollide(this, CollectibleList[i])) {
-                        ok = true;
+                        ok = CollectibleList[i];
+                    }
+                    else {
+                        i++;
                     }
                 }
+
                 if(ok) {
-                    this.setState("Atterraggio"); 
+                    switch(ok.constructor.name) {
+                        case "Goat": 
+                            GameObjectList.splice(GameObjectList.indexOf(this), 1);
+                        break;
+                        default: console.log("Errore LittleHay!"); break;
+                    }
+                    this.setState("Atterraggio");
+                    ok = null;
                 }
-                else
-                if(k < FLY_SPEED){
-                    var fly = Bezier3(flyStart, flyControl, flyEnd, k/FLY_SPEED);
+                else if(this.k < FLY_SPEED){
+                    var fly = Bezier3(this.flyStart, this.flyControl, this.flyEnd, this.k/FLY_SPEED);
+                    // console.log((this.flyStart.x-this.flyEnd.x)*(this.k/FLY_SPEED) + this.flyEnd.x,
+                    // (this.flyStart.y - this.flyEnd.y)*(this.k/FLY_SPEED) + this.flyEnd.y);
+                    // console.log(this.k)
                     this.Transform.x = fly.x;
                     this.Transform.y = fly.y;
-                    k++;
+                    this.k++;
                     this.setState("In volo");
                 }
                 else {
@@ -123,5 +143,62 @@ function LittleHay (options) {
                 console.log("NON GESTITO!");
             break;
         }
+    }
+
+    this.Render = function() {
+        this.State;
+        var anim = null;
+        switch(this.State) {
+            case "In volo":
+                this.CastShadow();
+                anim = this.Animator.getAnimation(this.State);
+            break;
+            case "Idle": 
+            case "Trasporto":
+            case "Atterraggio": 
+                anim = this.Animator.getAnimation(this.State);
+            break;
+            default: 
+                console.log("Render: errore non gestito!"); 
+            break;
+        }
+        context.drawImage(anim.image, 
+            anim.next_imageIndex() * anim.width, 
+            0, 
+            anim.width, 
+            anim.height, 
+            this.Transform.x, 
+            this.Transform.y, 
+            anim.width, 
+            anim.height);
+    }
+
+    this.CastShadow = function() {
+        context.save();
+        context.beginPath();
+        // console.log((-Math.pow((this.k-FLY_SPEED/2), 2) + Math.pow(FLY_SPEED/2, 2))/(Math.pow(FLY_SPEED/2, 2)/(this.Renderer.height/2)));
+        context.ellipse(
+            (this.flyEnd.x - this.flyStart.x)*(this.k/FLY_SPEED) + this.flyStart.x + this.Renderer.height/2,
+            (this.flyEnd.y - this.flyStart.y)*(this.k/FLY_SPEED) + this.flyStart.y + this.Renderer.height/2,
+            (-Math.pow(this.k-FLY_SPEED/2, 2) + Math.pow(FLY_SPEED/2, 2))/(Math.pow(FLY_SPEED/2, 2)/(this.Renderer.height/2)),
+            ((-Math.pow(this.k-FLY_SPEED/2, 2) + Math.pow(FLY_SPEED/2, 2))/(Math.pow(FLY_SPEED/2, 2)/(this.Renderer.height/2)))/1.2,
+            0, 
+            0, 
+            Math.PI*2
+        );
+        context.closePath();
+        // context.stroke();
+        context.clip();
+        context.drawImage(this.IMAGES["Grass3"], 
+            0, 0,
+            384, 384);
+        auxData = context.getImageData(
+            (this.flyEnd.x - this.flyStart.x)*(this.k/FLY_SPEED) + this.flyStart.x + this.Renderer.height/2, 
+            (this.flyEnd.y - this.flyStart.y)*(this.k/FLY_SPEED) + this.flyStart.y + this.Renderer.height/2, 
+            32, 32);
+        context.restore();
+        context.putImageData(auxData, 
+            (this.flyEnd.x - this.flyStart.x)*(this.k/FLY_SPEED) + this.flyStart.x + this.Renderer.height/2, 
+            (this.flyEnd.y - this.flyStart.y)*(this.k/FLY_SPEED) + this.flyStart.y + this.Renderer.height/2);
     }
 }
