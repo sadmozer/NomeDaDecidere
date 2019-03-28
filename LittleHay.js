@@ -115,7 +115,7 @@ function LittleHay (options) {
                         case "Goat": 
                             GameObjectList.splice(GameObjectList.indexOf(this), 1);
                         break;
-                        default: console.log("Errore LittleHay!"); break;
+                        default: break;
                     }
                     this.setState("Atterraggio");
                     ok = null;
