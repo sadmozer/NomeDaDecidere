@@ -139,15 +139,15 @@ function Update(deltaTime) {
     
     player.Update(deltaWorldMovement);
     
-    // if(InputController.getLClick() && !player.occupato) {
-    //     CollectibleList.push(GameObjectFactory.create({
-    //         GoClass: "LittleHay",
-    //         State: "Trasporto",
-    //         Images: result,
-    //         Name: "hay1",
-    //         Spawn: new Vector2(player.Transform.x, player.Transform.y)
-    //     }))
-    // }
+    if(InputController.getLClick() && !player.occupato) {
+        CollectibleList.push(GameObjectFactory.create({
+            GoClass: "LittleHay",
+            State: "Trasporto",
+            Images: result,
+            Name: "hay1",
+            Spawn: new Vector2(player.Transform.x, player.Transform.y)
+        }))
+    }
 
     for (let i = 0; i < CollectibleList.length; i++) {
         CollectibleList[i].Update(InputController, CollectibleList, player);
@@ -168,7 +168,6 @@ function Render() {
     var auxList = [];
     auxList = auxList.concat(CollectibleList);
     auxList.push(player);
-    // console.log(auxList);
     auxList.sort(function(a, b) {
         return (a.Transform.y + a.Renderer.height) - (b.Transform.y + b.Renderer.height);
     });

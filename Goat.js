@@ -13,7 +13,7 @@ function Goat (options) {
     this.timer_idle = Math.random() * IDLE_TIMEWAITING;
     this.targetPascolo = null;
     this.Renderer = new Renderer(this.IMAGES["Goat1-Idle"], this.IMAGES["Goat1-Idle"], 48, 48);
-
+    this.isHayColliding = false;
     this.Animator = new Animator([
         {name: "Idle",
         animation: new Animation({
@@ -58,6 +58,24 @@ function Goat (options) {
             speedFrames: 9,
             width: 48,
             height: 48
+        })},
+        {name: "Masticazione1",
+        animation: new Animation({
+            image: this.IMAGES["Goat1-Sit3Chewing"],
+            mirrorImage: this.IMAGES["Goat1-Sit3Chewing"],
+            numFrames: 5,
+            speedFrames: 11,
+            width: 48,
+            height: 48
+        })},
+        {name: "Masticazione2",
+        animation: new Animation({
+            image: this.IMAGES["Goat1-Sit2Chewing"],
+            mirrorImage: this.IMAGES["Goat1-Sit2Chewing"],
+            numFrames: 4,
+            speedFrames: 11,
+            width: 48,
+            height: 48
         })}
     ]);
 }
@@ -75,7 +93,11 @@ Goat.prototype.Update = function (InputController, GameObjectList, player, backS
     {
         case "Idle": 
         {
-            if(Math.hypot(this.Transform.x + this.Renderer.width/2 - player.centerTransform.x, 
+            if(this.isHayColliding) {
+                this.setState("Masticazione1");
+                this.mastic_timer = Math.random() * MASTIC_TIMER;
+            }
+            else if(Math.hypot(this.Transform.x + this.Renderer.width/2 - player.centerTransform.x, 
                 this.Transform.y + this.Renderer.width/2 - player.centerTransform.y) < 30 
                 && !player.occupato
                 && (InputController.getAxis().Horizontal != 0 || InputController.getAxis().Vertical != 0)) {
@@ -163,7 +185,11 @@ Goat.prototype.Update = function (InputController, GameObjectList, player, backS
         } break;
         case "Atterraggio": 
         {
-            if(this.Animator.getAnimation("Atterraggio").x >= this.Animator.getAnimation("Atterraggio").numFrames*this.Animator.getAnimation("Atterraggio").speedFrames-1) {
+            if(this.isHayColliding) {
+                this.setState("Masticazione1");
+                this.mastic_timer = Math.random() * MASTIC_TIMER;
+            }
+            else if(this.Animator.getAnimation("Atterraggio").x >= this.Animator.getAnimation("Atterraggio").numFrames*this.Animator.getAnimation("Atterraggio").speedFrames-1) {
                 this.randVect = new Vector2((Math.random() * (PASCOLO*2) - PASCOLO), (Math.random() * (PASCOLO*2) - PASCOLO));
                 this.targetPascolo = new Vector2(this.Transform.x + this.randVect.x, 
                     this.Transform.y + this.randVect.y);
@@ -176,7 +202,11 @@ Goat.prototype.Update = function (InputController, GameObjectList, player, backS
         } break;
         case "Pascolo": 
         {
-            if(Math.hypot(this.Transform.x + this.Renderer.width/2 - player.centerTransform.x, 
+            if(this.isHayColliding) {
+                this.setState("Masticazione1");
+                this.mastic_timer = Math.random() * MASTIC_TIMER;
+            }
+            else if(Math.hypot(this.Transform.x + this.Renderer.width/2 - player.centerTransform.x, 
                 this.Transform.y + this.Renderer.width/2 - player.centerTransform.y) < 30 
                 && !player.occupato
                 && (InputController.getAxis().Horizontal != 0 || InputController.getAxis().Vertical != 0)) {
@@ -198,6 +228,25 @@ Goat.prototype.Update = function (InputController, GameObjectList, player, backS
                 this.setState("Pascolo");
             }
         } break;
+        case "Masticazione1":
+            if(this.Animator.getAnimation("Masticazione1").x >= this.Animator.getAnimation("Masticazione1").numFrames * this.Animator.getAnimation("Masticazione1").speedFrames-1) {
+                this.setState("Masticazione2");
+            }
+        break;
+        case "Masticazione2":
+        {
+            if(this.mastic_timer > MASTIC_TIMER) {
+            // if(this.Animator.getAnimation("Masticazione").x >= this.Animator.getAnimation("Masticazione").numFrames * this.Animator.getAnimation("Masticazione").speedFrames-1) {
+                this.setState("Idle");
+                this.isHayColliding = false;
+                this.timer_idle = Math.random() * IDLE_TIMEWAITING;
+            }
+            else{
+                // console.log(this.Animator.getAnimation("Masticazione").x , this.Animator.getAnimation("Masticazione").numFrames * this.Animator.getAnimation("Masticazione").speedFrames);
+                this.setState("Masticazione2");
+                this.mastic_timer++;
+            }
+        } break;
         default:
             console.log("NON GESTITO!");
         break;
@@ -211,7 +260,9 @@ Goat.prototype.Render = function() {
         case "Idle": 
         case "Trasporto":
         case "Atterraggio":
-        case "Pascolo": 
+        case "Pascolo":
+        case "Masticazione1":
+        case "Masticazione2":
             anim = this.Animator.getAnimation(this.State);
         break;
         case "In volo":

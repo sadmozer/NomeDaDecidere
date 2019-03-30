@@ -17,7 +17,7 @@ const THROW_THRESHOLD = 30;
 const SPEED = 5;
 const FLY_SPEED = 30;
 const ARC_HEIGHT = 40;
-
+const MASTIC_TIMER = 150;
 const IMAGES_N = [
     'Bucket-Idle', 
     'Hay1-Idle', 
@@ -30,7 +30,10 @@ const IMAGES_N = [
     'Grass2',
     'Goat1-Idle',
     'Goat2-Idle',
-    'Grass3'
+    'Grass3',
+    'Goat1-Chewing',
+    'Goat1-Sit2Chewing',
+    'Goat1-Sit3Chewing'
 ];
 
 //     context.webkitImageSmoothingEnabled = false;
