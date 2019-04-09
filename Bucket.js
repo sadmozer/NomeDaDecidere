@@ -76,12 +76,12 @@ Bucket.prototype.Update = function (InputController, GameObjectList, player, bac
             case "Trasporto":
             if(InputController.getRClick()) {
                 if(player.Animator.orientation) {
-                    this.Transform.x = player.Transform.x + 64;
-                    this.Transform.y = player.Transform.y + 24;
+                    this.Transform.x += 64;
+                    this.Transform.y += Math.abs(this.Renderer.height-player.Renderer.height);
                 }
                 else {
-                    this.Transform.x = player.Transform.x - 32;
-                    this.Transform.y = player.Transform.y + 24;
+                    this.Transform.x += -32;
+                    this.Transform.y += Math.abs(this.Renderer.height-player.Renderer.height);
                 }
                 this.setState("Idle");
                 player.occupato = false;
@@ -135,7 +135,6 @@ Bucket.prototype.Update = function (InputController, GameObjectList, player, bac
 }
 
 Bucket.prototype.Render = function() {
-    this.State;
     var anim = null;
     switch(this.State) {
         case "Idle": 
@@ -144,7 +143,7 @@ Bucket.prototype.Render = function() {
             anim = this.Animator.getAnimation(this.State);
         break;
         case "In volo":
-            this.CastShadow();
+            // this.CastShadow();
             anim = this.Animator.getAnimation(this.State);
         break;
         default: 

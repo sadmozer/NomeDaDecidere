@@ -25,8 +25,8 @@ var goat1;
 var goat2;
 var vect;
 var c;
-
-var result = {};
+var prova;
+const IMAGES = {};
 function Loading(names, callback) {
     var n;
     var name;
@@ -34,14 +34,14 @@ function Loading(names, callback) {
     var onload = function() {
         console.log("Loading: " + names[names.length-count]);
         if(--count == 0) {
-            callback(result);
+            callback();
         }
     }
     for(n = 0; n < names.length; n++) {
         name = names[n];
-        result[name] = new Image();
-        result[name].onload = onload;
-        result[name].src = name + ".png";
+        IMAGES[name] = new Image();
+        IMAGES[name].onload = onload;
+        IMAGES[name].src = name + ".png";
     }
 }
 
@@ -102,11 +102,11 @@ function Start(IMAGES) {
         Spawn: new Vector2(150, 150),
         Renderer: new Renderer(IMAGES["Frog_Idle_COLORv1"], IMAGES["Frog_Idle_COLORv1 - Flipped"], 64, 64),
         Animator: new Animation({
-            image: IMAGES["Frog_Run_COLORv1"], 
+            image: IMAGES["Frog_Run_COLORv1"],
             mirrorImage: IMAGES["Frog_Run_COLORv1 - Flipped"], 
             numFrames: 8, 
             speedFrames:4, 
-            height:64, 
+            height: 64, 
             width: 64
         })
     });
@@ -115,20 +115,23 @@ function Start(IMAGES) {
     for (var i = 0; i < emptyCanvas.data.lenght; i++) {
         emptyCanvas.data[i] = 0;
     }
-    // GameObjectList.push(background);
-    // GameObjectList.push(goat1);
-    // GameObjectList.push(goat2);    
-    // GameObjectList.push(bucket);
-    // GameObjectList.push(secchio2);
-    // GameObjectList.push(littleHay);
+
     deltaWorldMovement = new Vector2(0, 0);
     worldMovement = new Vector2(0, 0);
     CollectibleList = [secchio2, bucket, littleHay, goat1, goat2];
+
+    prova = new Quadtree(1, 0, 0, 348, 348, 0);
+    // debugger;
+    for(let i = 0; i < CollectibleList.length; i++) {
+        var curr = CollectibleList[i];
+        // console.log(curr);
+        prova.Insert({StartX: curr.Transform.x, StartY: curr.Transform.y, Width: curr.Renderer.width, Height: curr.Renderer.height});
+        // console.log(prova);
+        // prova.Print();
+    }
 }
-var historyMovement;
-var k = 1;
 var CollectibleList;
-function Update(deltaTime) {
+function Update(deltaTime, IMAGES) {
     deltaWorldMovement.x = Math.trunc(InputController.getAxis().Horizontal * Versor[InputController.getAxis().Horizontal + 1][InputController.getAxis().Vertical + 1] * SPEED);
     deltaWorldMovement.y = Math.trunc(InputController.getAxis().Vertical * Versor[InputController.getAxis().Horizontal + 1][InputController.getAxis().Vertical + 1] * SPEED); 
     
@@ -143,7 +146,7 @@ function Update(deltaTime) {
         CollectibleList.push(GameObjectFactory.create({
             GoClass: "LittleHay",
             State: "Trasporto",
-            Images: result,
+            Images: IMAGES,
             Name: "hay1",
             Spawn: new Vector2(player.Transform.x, player.Transform.y)
         }))
@@ -159,11 +162,11 @@ function Update(deltaTime) {
     if(InputController.getRClick())
     InputController.setRClick(false);
 }
-function Render() {
+function Render(IMAGES) {
     context.translate(-deltaWorldMovement.x, -deltaWorldMovement.y);
     context.putImageData(emptyCanvas, 0, 0);
     
-    context.drawImage(background.Renderer.image, background.Transform.x, background.Transform.y);
+    // context.drawImage(background.Renderer.image, background.Transform.x, background.Transform.y);
     
     var auxList = [];
     auxList = auxList.concat(CollectibleList);
@@ -171,11 +174,23 @@ function Render() {
     auxList.sort(function(a, b) {
         return (a.Transform.y + a.Renderer.height) - (b.Transform.y + b.Renderer.height);
     });
+    CastShadows(IMAGES, CollectibleList);
+    prova = new Quadtree(2, 0, 0, canvas.width, canvas.height, 0);
+    for(let i = 0; i < CollectibleList.length; i++) {
+        var curr = CollectibleList[i];
+        // console.log(curr);
+        prova.Insert({StartX: curr.Transform.x, StartY: curr.Transform.y, Width: curr.Renderer.width, Height: curr.Renderer.height});
+        prova.Print();
+        // console.log(prova);
+    }
+    // prova.Insert({StartX: secchio2.Transform.x, StartY: secchio2.Transform.y, Width: 32, Height: 32});
+    // prova.Insert({StartX: goat1.Transform.x, StartY: goat1.Transform.y, Width: 32, Height: 32});
+    // prova.Insert({StartX: goat2.Transform.x, StartY: goat2.Transform.y, Width: 32, Height: 32});
 
     for(var i = 0; i < auxList.length; i++) {
         auxList[i].Render();
     }
-
+    
     // player.Render();
     
     if(draw) {
@@ -187,18 +202,18 @@ function Render() {
 }
 
 var lastTime = 0;
-function GameLoop(time = 0) {
+function GameLoop(time) {
     deltaTime = time - lastTime;
     lastTime = time;
-    Update(deltaTime);
-    Render();
+    Update(deltaTime, IMAGES);
+    Render(IMAGES);
     requestAnimationFrame(GameLoop);
 }
 
-function RunGame(IMAGES) {
+function RunGame() {
     console.log("Done!");
     Start(IMAGES);
-    GameLoop();
+    GameLoop(0);
 }
 
 

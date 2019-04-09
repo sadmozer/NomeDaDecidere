@@ -154,7 +154,7 @@ LittleHay.prototype.Render = function() {
     var anim = null;
     switch(this.State) {
         case "In volo":
-            this.CastShadow();
+            // this.CastShadow();
             anim = this.Animator.getAnimation(this.State);
         break;
         case "Idle": 

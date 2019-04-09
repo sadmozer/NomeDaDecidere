@@ -33,8 +33,15 @@ const IMAGES_N = [
     'Grass3',
     'Goat1-Chewing',
     'Goat1-Sit2Chewing',
-    'Goat1-Sit3Chewing'
+    'Goat1-Sit3Chewing',
+    'EmptyTalk1',
+    'LoveTalk1',
+    'Pentacle1',
+    'Goat1-Talk'
 ];
+
+
+function GameObjectFactory() {};
 
 //     context.webkitImageSmoothingEnabled = false;
     // context.mozImageSmoothingEnabled = false;
