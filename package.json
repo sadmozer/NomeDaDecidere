@@ -4,7 +4,6 @@
   "description": "Gioco in JS",
   "main": "Game.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
@@ -15,5 +14,6 @@
   "bugs": {
     "url": "https://github.com/sadmozer/NomeDaDecidere/issues"
   },
-  "homepage": "https://github.com/sadmozer/NomeDaDecidere#readme"
+  "homepage": "https://github.com/sadmozer/NomeDaDecidere#readme",
+  "dependencies": {}
 }

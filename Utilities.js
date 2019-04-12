@@ -97,6 +97,8 @@ function Collider(options) {
     }
 }
 
+
+
 function Shadow(options) {
     this.CenterX = options.CenterX;
     this.CenterY = options.CenterY;
@@ -209,26 +211,10 @@ function CastShadows(IMAGES, GameObjectList) {
     0, 0,
     384, 384);
     context.globalCompositeOperation='source-over';
-        // 0,0);
-    // var auxData = [];
-    // for(i = 0; i < GameObjectList.length; i++) {
-    //     var curr = GameObjectList[i];
-    //     auxData.push(context.getImageData(
-    //         curr.Transform.x + curr.Renderer.height/2, 
-    //         curr.Transform.y + curr.Renderer.width/2, 
-    //         curr.Renderer.height, curr.Renderer.height));
-    // }
-    // context.restore();
-
-    // for(i = 0; i < GameObjectList.length; i++) {
-    //     var curr = GameObjectList[i];
-    //     context.putImageData(auxData[i], 
-    //         curr.Transform.x + curr.Renderer.height/2, 
-    //         curr.Transform.y + curr.Renderer.width/2);
-    // }
 }
 
 
+// Quadtree
 function Quadtree (Max, StartX, StartY, Width, Height, Lvl) {
     this.Nodes = [];
     this.ObjectList = [];
@@ -239,25 +225,21 @@ function Quadtree (Max, StartX, StartY, Width, Height, Lvl) {
     this.Width = Width;
     this.Height = Height;
 }
-
 Quadtree.prototype.Contains = function(Obj) {
-    var ax = this.StartX;
-    var ay = this.StartY;
-    var aw = this.Width;
-    var ah = this.Height;
-    // console.log(this, Obj);
-    var bx = Obj.StartX;
-    var by = Obj.StartY;
-    var bw = Obj.Width;
-    var bh = Obj.Height;
+    // debugger;
+    // console.log(Obj);
+    // console.log(canvas.width, canvas.height);
+    // console.log(Obj.Transform.x + Obj.Collider.OffsetX > this.StartX);
+    // console.log(Obj.Transform.x + Obj.Collider.OffsetX + Obj.Collider.Width < this.StartX + this.Width);
+    // console.log(Obj.Transform.y + Obj.Collider.OffsetY > this.StartY);
+    // console.log(Obj.Transform.y + Obj.Collider.OffsetY + Obj.Collider.Height < this.StartY + this.Height);
     return (
-        (Obj.StartX > this.StartX) &&
-        (Obj.StartX < this.StartX + this.Width) &&
-        (Obj.StartY > this.StartY) &&
-        (Obj.StartY < this.StartY + this.Height)
+        (Obj.Transform.x + Obj.Collider.OffsetX > this.StartX) &&
+        (Obj.Transform.x + Obj.Collider.OffsetX + Obj.Collider.Width < this.StartX + this.Width) &&
+        (Obj.Transform.y + Obj.Collider.OffsetY > this.StartY) &&
+        (Obj.Transform.y + Obj.Collider.OffsetY + Obj.Collider.Height < this.StartY + this.Height)
     );
 }
-
 Quadtree.prototype.Insert = function(Obj) {
     if(this.Nodes.length > 0) {
         var j = 0;
@@ -274,10 +256,10 @@ Quadtree.prototype.Insert = function(Obj) {
     }
     else {
         if(this.ObjectList.length >= this.MAX_OBJECTS) {
-            this.Nodes.push(new Quadtree(this.MAX_OBJECTS, this.StartX, this.StartY, this.Width/2, this.Height/2, this.Lvl+1));
-            this.Nodes.push(new Quadtree(this.MAX_OBJECTS, this.StartX + this.Width/2, this.StartY, this.Width/2, this.Height/2, this.Lvl+1));
-            this.Nodes.push(new Quadtree(this.MAX_OBJECTS, this.StartX, this.StartY + this.Height/2, this.Width/2, this.Height/2, this.Lvl+1));
-            this.Nodes.push(new Quadtree(this.MAX_OBJECTS, this.StartX + this.Width/2, this.StartY + this.Height/2, this.Width/2, this.Height/2, this.Lvl+1));
+            this.Nodes.push(new Quadtree(this.MAX_OBJECTS, this.StartX, this.StartY, Math.round(this.Width/2)-1, Math.round(this.Height/2)-1, this.Lvl+1));
+            this.Nodes.push(new Quadtree(this.MAX_OBJECTS, this.StartX + Math.round(this.Width/2),this. StartY, Math.round(this.Width/2), Math.round(this.Height/2)-1, this.Lvl+1));
+            this.Nodes.push(new Quadtree(this.MAX_OBJECTS, this.StartX, this.StartY + Math.round(this.Height/2), Math.round(this.Width/2)-1, Math.round(this.Height/2), this.Lvl+1));
+            this.Nodes.push(new Quadtree(this.MAX_OBJECTS, this.StartX + Math.round(this.Width/2)-1, this.StartY + Math.round(this.Height/2)-1, Math.round(this.Width/2), Math.round(this.Height/2), this.Lvl+1));
             for(let i = 0; i < this.ObjectList.length; i++) {
                 var j = 0;
                 var trovato = false;
@@ -292,6 +274,9 @@ Quadtree.prototype.Insert = function(Obj) {
                         // console.log("L'oggetto " + i + " non interseca il quadrante " + j);
                         j++;
                     }
+                }
+                if(!trovato) {
+                    console.log("QUESTO OGGETTO E'' CONTENUTO IN ALCUN QUADRANTE!", this.ObjectList[i]);
                 }
             }
             j = 0;
@@ -314,6 +299,7 @@ Quadtree.prototype.Insert = function(Obj) {
         }
     }
 }
+// Quadtree.
 Quadtree.prototype.Print = function() {
     // console.log("Livello "+ this.Lvl);
     if(this.Nodes.length <= 0) {
@@ -323,18 +309,58 @@ Quadtree.prototype.Print = function() {
     }
     else {
         context.beginPath();
-        context.moveTo(this.StartX + this.Width/2, this.StartY);
-        context.lineTo(this.StartX + this.Width/2, this.StartY + this.Height);
+        context.lineWidth = 1;
+        context.moveTo(this.StartX + Math.round(this.Width/2)-1.5, this.StartY);
+        context.lineTo(this.StartX + Math.round(this.Width/2)-1.5, this.StartY + this.Height);
+        context.strokeStyle = "#FF0000";
         context.stroke();
         context.closePath();
 
         context.beginPath();
-        context.moveTo(this.StartX, this.StartY + this.Height/2);
-        context.lineTo(this.StartX + this.Width, this.StartY + this.Height/2);
+        context.lineWidth = 1;
+        context.moveTo(this.StartX + Math.round(this.Width/2)-0.5, this.StartY);
+        context.lineTo(this.StartX + Math.round(this.Width/2)-0.5, this.StartY + this.Height);
+        context.strokeStyle = "#00FF00";
         context.stroke();
         context.closePath();
+
+        context.beginPath();
+        context.lineWidth = 1;        
+        context.moveTo(this.StartX, this.StartY + Math.round(this.Height/2)-1.5);
+        context.lineTo(this.StartX + this.Width, this.StartY + Math.round(this.Height/2)-1.5);
+        context.strokeStyle = "#FFFFFF";
+        context.stroke();
+        context.closePath();
+
+        context.beginPath();
+        context.lineWidth = 1;        
+        context.moveTo(this.StartX, this.StartY + Math.round(this.Height/2)-0.5);
+        context.lineTo(this.StartX + this.Width, this.StartY + Math.round(this.Height/2)-0.5);
+        context.strokeStyle = "#0000FF";        
+        context.stroke();
+        context.closePath();
+
         for(let i = 0; i < 4; i++) {
             this.Nodes[i].Print();
         }
+    }
+}
+
+Quadtree.prototype.GetLeaf = function(Obj) {
+    if(this.Nodes.length > 0) {
+        var trovato = false;
+        var i = 0;
+        while(i < 4 && !trovato) {
+            if(this.Nodes[i].Contains(Obj)) {
+                trovato = false;
+                return this.Nodes[i].GetLeaf(Obj);
+            }
+            else {
+                i++;
+            }
+        }
+    }
+    else {
+        return this;
     }
 }

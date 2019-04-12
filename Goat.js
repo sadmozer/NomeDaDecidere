@@ -12,13 +12,16 @@ function Goat (options) {
     this.timer = 0;
     this.timer_idle = Math.random() * IDLE_TIMEWAITING;
     this.targetPascolo = null;
+    this.IsCollidingWith = [];
+
     this.Renderer = new Renderer(this.IMAGES["Goat1-Idle"], this.IMAGES["Goat1-Idle"], 48, 48);
+    
     this.Collider = new Collider({
-        Shape: "Ellipse",
-        CenterX: 24,
-        CenterY: 30,
-        RadiusX: 22,
-        RadiusY: 12
+        Shape: "Rect",
+        OffsetX: 3,
+        OffsetY: 16,
+        Width: 39,
+        Height: 27
     });
     this.Shadow = new Shadow({
         CenterX: 24,
@@ -118,10 +121,13 @@ Goat.prototype.DrawCollider = function() {
     switch(this.Collider.Shape) {
         case "Rect":
             context.beginPath();
-            context.rect(this.Transform.x + this.Collider.OffsetX, 
-                this.Transform.y + this.Collider.OffsetY,
+            context.rect(this.Transform.x + this.Collider.OffsetX + 0.5, 
+                this.Transform.y + this.Collider.OffsetY + 0.5,
                 this.Collider.Width, this.Collider.Height);
-            context.stroke();
+            if(this.IsCollidingWith.length > 0)
+                context.fill();
+            else
+                context.stroke();
             context.closePath();
             break;
         case "Circle":
@@ -145,7 +151,7 @@ Goat.prototype.DrawCollider = function() {
                 0,
                 0,
                 Math.PI*2);
-            context.strokeStyle = 'rgba(0, 0, 255, 0.5)';
+            // context.strokeStyle = 'rgba(0, 0, 255, 0.5)';
             context.stroke();
             context.closePath();
             context.strokeStyle = 'black';
@@ -154,7 +160,27 @@ Goat.prototype.DrawCollider = function() {
     }
 }
 
-Goat.prototype.Update = function (InputController, GameObjectList, player) {
+Goat.prototype.isCollide = function(Obj) {
+    return (this.Transform.y + this.Collider.OffsetY + this.Collider.Height) > (Obj.Transform.y + Obj.Collider.OffsetY) &&
+            (this.Transform.y + this.Collider.OffsetY) < (Obj.Transform.y + Obj.Collider.OffsetY + Obj.Collider.Height) &&
+            (this.Transform.x + this.Collider.OffsetX + this.Collider.Width) > (Obj.Transform.x + Obj.Collider.OffsetX) &&
+            (this.Transform.x + this.Collider.OffsetX) < (Obj.Transform.x + Obj.Collider.OffsetX + Obj.Collider.Width);
+}
+
+Goat.prototype.DetectCollisions = function(Qtree) {
+    var node;
+    if(node = Qtree.GetLeaf(this)) {
+        for(let i = 0; i < node.ObjectList.length; i++) {
+            if(this !== node.ObjectList[i] && this.isCollide(node.ObjectList[i])) {
+                // console.log(this, node.ObjectList[i]);
+                this.IsCollidingWith.push(node.ObjectList[i]);
+            }
+        }
+    }
+}
+Goat.prototype.Update = function (InputController, GameObjectList, player, Qtree) {
+    this.IsCollidingWith = [];
+    this.DetectCollisions(Qtree);
     switch(this.getState()) 
     {
         case "Idle": 

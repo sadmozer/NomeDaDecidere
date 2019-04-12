@@ -1,6 +1,6 @@
 
 
-context.fillStyle = '#FFF';
+context.fillStyle = '#FFF000';
 context.fillRect(0, 0, canvas.width, canvas.height);
 
 // var GameObjectList = new Array();
@@ -120,15 +120,15 @@ function Start(IMAGES) {
     worldMovement = new Vector2(0, 0);
     CollectibleList = [secchio2, bucket, littleHay, goat1, goat2];
 
-    prova = new Quadtree(1, 0, 0, 348, 348, 0);
-    // debugger;
-    for(let i = 0; i < CollectibleList.length; i++) {
-        var curr = CollectibleList[i];
-        // console.log(curr);
-        prova.Insert({StartX: curr.Transform.x, StartY: curr.Transform.y, Width: curr.Renderer.width, Height: curr.Renderer.height});
-        // console.log(prova);
-        // prova.Print();
-    }
+    // prova = new Quadtree(1, 0, 0, 348, 348, 0);
+    // // debugger;
+    // for(let i = 0; i < CollectibleList.length; i++) {
+    //     var curr = CollectibleList[i];
+    //     // console.log(curr);
+    //     prova.Insert(curr);
+    //     // console.log(prova);
+    //     // prova.Print();
+    // }
 }
 var CollectibleList;
 function Update(deltaTime, IMAGES) {
@@ -152,10 +152,31 @@ function Update(deltaTime, IMAGES) {
         }))
     }
 
-    for (let i = 0; i < CollectibleList.length; i++) {
-        CollectibleList[i].Update(InputController, CollectibleList, player);
+    prova = new Quadtree(2, 0, 0, canvas.width, canvas.height, 0);
+    for(let i = 0; i < CollectibleList.length; i++) {
+        var curr = CollectibleList[i];
+        if(curr.Collider)
+            prova.Insert(curr);
+        // console.log(prova);
     }
-
+    // debugger;
+    for (let i = 0; i < CollectibleList.length; i++) {
+        CollectibleList[i].Update(InputController, CollectibleList, player, prova);
+    }
+    for (let i = 0; i < CollectibleList.length; i++) {
+        var curr = CollectibleList[i];
+        if(curr.Collider) {
+            // console.log(curr.Collider);
+            if(curr.getState() !== "Trasporto" &&
+                (curr.Transform.x + curr.Collider.OffsetX < 0 || 
+                curr.Transform.x + curr.Collider.OffsetX > canvas.width || 
+                curr.Transform.y + curr.Collider.OffsetY < 0 || 
+                curr.Transform.y + curr.Collider.OffsetY > canvas.height)) {
+                curr.Transform.x = Math.round(canvas.width/2) + deltaWorldMovement.x;
+                curr.Transform.y = Math.round(canvas.height/2) + deltaWorldMovement.y;
+            }
+        }
+    }
     
     if(InputController.getLClick())
     InputController.setLClick(false);
@@ -175,17 +196,7 @@ function Render(IMAGES) {
         return (a.Transform.y + a.Renderer.height) - (b.Transform.y + b.Renderer.height);
     });
     CastShadows(IMAGES, CollectibleList);
-    prova = new Quadtree(2, 0, 0, canvas.width, canvas.height, 0);
-    for(let i = 0; i < CollectibleList.length; i++) {
-        var curr = CollectibleList[i];
-        // console.log(curr);
-        prova.Insert({StartX: curr.Transform.x, StartY: curr.Transform.y, Width: curr.Renderer.width, Height: curr.Renderer.height});
-        prova.Print();
-        // console.log(prova);
-    }
-    // prova.Insert({StartX: secchio2.Transform.x, StartY: secchio2.Transform.y, Width: 32, Height: 32});
-    // prova.Insert({StartX: goat1.Transform.x, StartY: goat1.Transform.y, Width: 32, Height: 32});
-    // prova.Insert({StartX: goat2.Transform.x, StartY: goat2.Transform.y, Width: 32, Height: 32});
+    prova.Print();
 
     for(var i = 0; i < auxList.length; i++) {
         auxList[i].Render();
